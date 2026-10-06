@@ -1,0 +1,9 @@
+.composition{position:relative;width:100%;margin:0;container-type:inline-size;isolation:isolate}
+.original{display:block;width:100%;height:100%;object-fit:contain}
+.captionMask{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.caption{position:absolute;inset:0;pointer-events:none}
+.captionLine{position:absolute;display:flex;align-items:center;justify-content:center;white-space:nowrap;font-family:Georgia,'Times New Roman',serif;font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.035em;color:#513519;text-align:center;transform-origin:center}
+.multiline{white-space:normal;line-height:1.04;text-wrap:balance}
+.unavailable{padding:22px 18px;text-align:center;font-size:12px;color:#7b6341;border-block:1px solid #cab58a55}
+.unavailable figcaption{margin-top:10px;font-style:italic}
+.clearance{position:absolute;display:block;pointer-events:none}
