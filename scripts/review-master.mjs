@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 const output = '.verification/master';
 const baseURL = process.env.INVITATION_REVIEW_URL || 'http://localhost:3000';
 const diagnostic = process.env.INVITATION_REVIEW_DIAGNOSTIC === '1';
-const browser = await chromium.launch({ headless: true, executablePath: 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe' });
+const executablePath = process.env.CHROMIUM_EXECUTABLE_PATH || (process.platform === 'win32' ? 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe' : undefined);
+const browser = await chromium.launch({ headless: true, executablePath, args: ['--disable-dev-shm-usage'] });
 const report = { widths: [], locale: [], clock: {}, static: {}, errors: [] };
 const suppliedFiles = [
   'ChatGPT Image Oct 6, 2026, 07_51_13 PM.png', 'ChatGPT Image Oct 6, 2026, 08_33_05 PM.png',
@@ -77,6 +78,8 @@ async function coreStructure(page, width) {
   assert.ok(layout.overflow <= width, 'No horizontal overflow at ' + width);
   assert.ok(Math.abs(layout.left - (width - layout.width) / 2) < 1, 'Phone composition is centered');
   assert.equal(layout.patternCount, 2); assert.equal(layout.patternTotal, 2);
+  assert.equal(await page.locator('.story-pattern').count(), 2, 'A faint recurring pair of cultural edges');
+  assert.ok(await page.locator('.story-pattern').first().evaluate(el => Number(getComputedStyle(el).opacity) < .05), 'Recurring texture stays much fainter than the opening');
   return layout;
 }
 async function samplerChecks(page) {
@@ -99,10 +102,11 @@ async function samplerChecks(page) {
       for (const [index, h] of [pair.a, pair.b].entries()) {
         if (h.x-h.width*.55 < 0 || h.x+h.width*.55 > g.width) failures.push({ scroll, index, reason: 'horizontal clipping' });
         if (h.width < 21.999 || h.width > 28.001 || Math.abs(h.rotation) > 15) failures.push({ scroll, index, reason: 'size or tilt' });
-        for (const [target, b] of clearance.entries()) {
-          if (h.x+h.width*.52>b.x && h.x-h.width*.52<b.x+b.width && h.y+h.height*.52>b.y && h.y-h.height*.52<b.y+b.height) failures.push({ scroll, index, target, reason: 'meaningful composition overlap' });
-        }
+        if (Math.abs(h.x - g.width/2) > 39) failures.push({ scroll, index, reason: 'traveller left the central corridor' });
       }
+      if (Math.hypot(pair.a.x-pair.b.x,pair.a.y-pair.b.y) > 42) failures.push({ scroll, reason: 'pair separated too far' });
+      if (Math.abs(pair.a.y-pair.b.y) > 21) failures.push({ scroll, reason: 'excessive vertical lead' });
+      if (Math.hypot((pair.a.x+pair.b.x)/2-pair.route.x,(pair.a.y+pair.b.y)/2-pair.route.y) > .01) failures.push({ scroll, reason: 'shared route drifted away from the pair' });
     }
     return { continuity, failures, clearanceCount: clearance.length, networkCount: m.routes?.length ?? 0 };
   });
@@ -117,8 +121,7 @@ async function routeChecks(page) {
       const pathLength = mask.getTotalLength(), offset = Number(mask.style.strokeDashoffset), visible = Math.max(0, pathLength-offset);
       if (offset < -.2 || offset > pathLength+.2) failures.push({ id: route.id, reason: 'invalid path-length reveal range', offset, pathLength });
       if (visible <= .05) continue;
-      // Invert the path-length reveal against each branch's own sampled history.
-      // A leading heart must never expose a sample from later native-scroll progress.
+      // Invert the single reveal against the pair's shared sampled history.
       const distance = visible/pathLength*route.lengths.at(-1);
       let index = 0;
       while (index < route.lengths.length-2 && route.lengths[index+1] < distance) index++;
@@ -128,14 +131,15 @@ async function routeChecks(page) {
       if (revealedScroll > scroll+.1) failures.push({ id: route.id, reason: 'future trail revealed', scroll, revealedScroll });
       if (scroll >= route.start && scroll < route.end) {
         const point = mask.getPointAtLength(visible);
-        const body = route.kind === 'a' ? pair.a : route.kind === 'b' ? pair.b : pair.route;
+        const body = pair.route;
         const gap = Math.hypot(point.x-body.x, point.y-body.y);
         if (gap > (route.kind === 'shared' ? 65 : 45)) failures.push({ id: route.id, reason: 'leading trail detached from traveller', gap, scroll });
         active.push({ id: route.id, kind: route.kind, gap, revealedScroll });
       }
     }
     const separation = Math.hypot(pair.a.x-pair.b.x, pair.a.y-pair.b.y);
-    if (scroll > 55 && separation > 95 && !['a', 'b'].every(kind => active.some(route => route.kind === kind))) failures.push({ reason: 'separated hearts require both independently revealed branches', scroll, separation, active });
+    const join = motion.knots.find(knot => knot.beat === 'join').scroll;
+    if (scroll <= join && active.length) failures.push({ reason: 'trail appeared before the hearts met', scroll });
     return { scroll, separation, active, failures };
   });
 }
@@ -162,8 +166,8 @@ try {
     assert.ok(checks.clearanceCount > 0, 'Meaningful collision targets must be present');
     if (checks.failures.length) await writeFile(output + '/clearance-' + width + '.json', JSON.stringify(checks.failures, null, 2));
     if (diagnostic && checks.failures.length) report.errors.push('Dense silhouette clearance at ' + width + ': ' + checks.failures.length + ' collisions');
-    else assert.equal(checks.failures.length, 0, 'Dense silhouette clearance at ' + width);
-    assert.ok(await page.locator('[data-route]').count() >= 3, 'Separate and shared route network');
+    else assert.equal(checks.failures.length, 0, 'Dense central-pair spacing and lead limits at ' + width);
+    assert.equal(await page.locator('[data-route]').count(), 1, 'Exactly one shared trail');
     await page.screenshot({ path: output + '/opening-' + width + '.png' });
     const beats = [], networkChecks = [], pauseKnots = motion.knots.filter((_, index) => index % 3 === 1);
     for (const knot of pauseKnots) {

@@ -1,47 +1,48 @@
-# Authoritative master repair checklist
+# Close-pair heart motion repair
 
-## Implementation and inspection
+The latest request replaces the previous edge detours and split trails. Existing portraits, languages, wedding data, countdown, map camera and venue components are retained.
 
-- [x] Wire all eight exact supplied files through one registry; preserve original PNGs and encoded paths.
-- [x] Add adult composition after childhood, preserving portraits, paper, names, alpha, and decorative details.
-- [x] Cover only baked English lettering with confined original-paper texture masks and localized HTML captions.
-- [x] Implement automatic EN/TR selection, persisted manual switch, locale-aware date/time and complete UI/alt text.
-- [x] Confine faint configured patterns to their opening-country sides; fade with the maps.
-- [x] Correct heart visible size, measured anchors, curved paths, and coordinate conversion.
-- [x] Author varied continuous dance and eliminate side snaps, loops, duplicate travellers, and self-spins.
-- [x] Implement independent branch masks, shared spans, reversible junctions, retained history, and no future trail.
-- [x] Replace oversized scene heights with content-sized portraits/countdown and connected pacing.
-- [x] Build four-image scale/pan/crossfade sequence inside one occupied pinned viewport.
-- [x] Place localized venue pin/note over the final city, with verified-data-only directions logic.
-- [x] Set real countdown and complete two-heart resting ending with quiet landmark fallbacks.
-- [x] Verify reduced motion, no-JavaScript information, lifecycle cleanup, and phone accessibility.
-- [x] Update README.md, ASSETS.md, translations, and remaining-data notes.
-- [x] Final production/type check and screenshot refresh after the last small visual adjustments.
+## Completed changes
 
-## Verification evidence
+- [x] Remove every wide left/right detour around the verse, portraits, countdown and venue note.
+- [x] Keep both hearts on one gently curving central route after they meet.
+- [x] Separate the shared route from small pair-relative circling and lead changes.
+- [x] Smooth the transition from the measured country anchors without resetting the dance.
+- [x] Keep heart centre separation within 40px and vertical lead within 20px after the join.
+- [x] Keep exactly two persistent hearts and settle them separately at the ending.
+- [x] Replace the 18 split/shared route spans with one shared path.
+- [x] Begin the trail only at the meeting point; draw and erase it from scroll.
+- [x] Preserve text/venue-note masks and keep the trail tied to the pair's actual midpoint.
+- [x] Add faint fixed cultural edges at 3.5% opacity, retaining stronger opening patterns.
+- [x] Preserve all original image files, locale support and real wedding configuration.
+- [x] Update browser checks for the central pair and single-trail requirements.
+- [x] Make the main browser review portable with CHROMIUM_EXECUTABLE_PATH.
+- [x] Update README.md and ASSETS.md.
 
-- [x] Final TypeScript and production build passed after the last implementation changes.
-- [x] Pure real timestamp/timezone, names, city, countdown future/zero/past/invalid cases and Maps URL guards.
-- [x] Browser inspection at 320, 390, 430, and 1440px, plus short landscape orientation.
-- [x] Dense meaningful silhouette clearance and numerical position/tangent/rotation/size continuity across all 32 knots.
-- [x] Paused, slow, fast, repeated direction changes and exact reverse snapshots for both hearts, 18 route spans, camera, and paper.
-- [x] Independent branch endpoints/path-length prefixes, retained history, no future reveal, and full top erasure.
-- [x] All four map handoffs, occupied imagery, final pin/paper attachment and 44px directions target.
-- [x] Mid-scroll refresh, viewport resize/orientation, and return to the previous phone pose.
-- [x] tr-TR/en-US, unsupported-first supported-later, fully unsupported fallback, cookie/localStorage manual precedence.
-- [x] Mid-scroll and visible-note EN/TR switching preserves scroll, poses, camera, note size, and scene height.
-- [x] Both localized portrait compositions inspected at 320/390/430; captions readable, original English covered, names preserved.
-- [x] Countdown reaches zero and stops, without changing the final real timestamp.
-- [x] Readable reduced-motion final city and no-JavaScript practical information.
-- [x] Final missing-artwork/forced-motion-failure recheck with new four-map/portrait components.
-- [x] Final production build and TypeScript.
+## Verification performed for this repair
 
-Browser reports/screenshots: `.verification/master/`. There is no lint configuration or lint command. Source map perspectives differ; their feature registration is visually tuned and approximate, not geographically verified.
+- [x] TypeScript check.
+- [x] Production build using the lockfile's Next.js 16.3.8.
+- [x] Wedding configuration/countdown/directions/locale unit checks.
+- [x] Browser review at 320, 390, 430 and 1440px, plus landscape orientation.
+- [x] Dense central-corridor, pair-distance and vertical-lead checks.
+- [x] Position/tangent/rotation/size continuity through 26 choreography knots.
+- [x] Exactly one path, no pre-meeting trail, no future reveal and full top erasure.
+- [x] Paused poses, backward snapshots, fast/repeated direction changes.
+- [x] Map handoffs and over-city venue-note attachment.
+- [x] Mid-scroll reload, viewport resize and orientation.
+- [x] Six locale scenarios, persistent manual selection and switching mid-scroll.
+- [x] Countdown reaches zero without changing the configured wedding timestamp.
+- [x] Reduced motion and no-JavaScript practical information.
+- [x] Actual browser screenshots inspected with local fonts configured.
+- [x] Hash comparison confirms every original PNG remains unchanged.
+
+The current review checks the new close central dance rather than the old whole-portrait clearance rule that forced the hearts toward the phone edges. The shared line retains content masks. Missing-artwork and forced-initialization-error tests from the previous implementation were not rerun for this scoped repair. No lint script/configuration exists.
 
 ## Genuine remaining inputs
 
-- [ ] Exact venue name, address and/or coordinates. Directions stay unavailable until supplied; verify actual destination afterward.
-- [ ] Optional supplied Algerian/Palestinian skyline artwork; no such files were found, so small vector fallbacks are used.
-- [ ] Optional authoritative verse calligraphy; live correctly shaped Arabic is already available.
+- [ ] Exact venue name, address and/or coordinates. Directions stay unavailable until supplied.
+- [ ] Optional supplied Algerian/Palestinian skyline artwork; quiet existing vector fallbacks remain.
+- [ ] Optional supplied verse calligraphy; correctly shaped live Arabic is already available.
 
-Amir/Raghed, the date/time, destination city, all eight new portraits/pattern/map files, and the existing opening maps/heart are present and configured. They are not outstanding user inputs. Original supplied files remain unchanged.
+Amir/Raghed, 17 October 2026 at 15:00 in Europe/Istanbul, İzmit/Kocaeli, the two portraits, two patterns, four map frames and opening maps/heart are present.

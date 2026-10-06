@@ -12,6 +12,10 @@ function Flourish(){return <div className="flourish" aria-hidden="true"><i/><spa
 export default function Page(){
   const {locale,copy}=useLocale();
   return <main className="invitation enhanced" id="invitation">
+    <div className="story-patterns" aria-hidden="true">
+      <div className="story-pattern story-pattern-left"><Artwork id="openingPatternAlgeria"/></div>
+      <div className="story-pattern story-pattern-right"><Artwork id="openingPatternPalestine"/></div>
+    </div>
     <LocaleSwitch/>
     <StoryMotion/>
     <section className="opening scene" data-scene="opening" aria-label={copy.intro}>

@@ -18,7 +18,7 @@ Filenames containing spaces and a comma are referenced through `'/assets/' + enc
 | `mapRegional` | `Assets/ChatGPT Image Oct 6, 2026, 07_50_54 PM.png` | `/assets/ChatGPT%20Image%20Oct%206%2C%202026%2C%2007_50_54%20PM.png` | Same map viewport, stage 3 | 1916 × 821 | Opaque RGB; full source, proportional cover fit with independent camera pan/scale |
 | `mapCity` | `Assets/ChatGPT Image Oct 6, 2026, 07_50_58 PM.png` | `/assets/ChatGPT%20Image%20Oct%206%2C%202026%2C%2007_50_58%20PM.png` | Same map viewport, stage 4, venue annotation | 1916 × 821 | Opaque RGB; full source, proportional cover fit with independent camera pan/scale |
 
-The actual Palestinian-pattern source is 724 × 2172, rather than the brief's 682 × 2048. The registry uses the actual file size. Both configured pattern-to-country associations follow the brief; visual inspection alone does not establish their cultural provenance. Swapping these associations requires changing their registry filenames/metadata. The source colors and transparency remain unchanged, and neither pattern is mirrored or used as a full-page border.
+The actual Palestinian-pattern source is 724 × 2172, rather than the brief's 682 × 2048. The registry uses the actual file size. Both configured pattern-to-country associations follow the brief; visual inspection alone does not establish their cultural provenance. Swapping these associations requires changing their registry filenames/metadata. The source colors and transparency remain unchanged and neither pattern is mirrored. The opening strips use 11% opacity; additional fixed, fading edge strips use 3.5% opacity to carry the theme through the story. Their settings are in `app/globals.css`, under `.story-pattern`.
 
 ## Optional artwork with no supplied file
 

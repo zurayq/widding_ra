@@ -72,7 +72,7 @@ export function StoryMotion(){
    const draw=(s:number)=>{
     const p=sampleJourney(knots,s);place([p.a,p.b]);
     for(const {route,mask,path}of rendered){const visible=routeLengthAt(route,Math.max(0,s-6));mask.style.strokeDashoffset=String(Math.max(0,route.length-visible));path.style.opacity=visible>.05?'1':'0';}
-    svg.current!.style.opacity=s<=7?'0':'1';
+    svg.current!.style.opacity=s<=routes[0].start?'0':'1';
     const departure=range(s,58,285);gsap.set(root.querySelector('.origins'),{opacity:1-departure,y:-20*departure,scale:1-.06*departure});
     for(const pattern of root.querySelectorAll('.edge-pattern'))gsap.set(pattern,{opacity:.11*(1-departure),y:-18*departure});
     gsap.set(root.querySelector('.opening-heading'),{opacity:1-range(s,70,290),y:-9*range(s,70,290)});
