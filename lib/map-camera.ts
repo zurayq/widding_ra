@@ -1,18 +1,8 @@
-import { assets } from './assets';
+import { seekMapVideo, stopMapVideo } from './map-video';
 type Point = { x: number; y: number };
-type MapAssetId = 'mapWide' | 'mapCloser' | 'mapRegional' | 'mapCity';
-export type MapLayerConfig = { asset: MapAssetId; focal: Point; focalEnd?: Point; zoomStart: number; zoomEnd: number; start: number; end: number };
-// Foci identify illustration features, not latitude/longitude. The originals have
-// different perspective/framing, so every layer has its own fit and camera.
 export const mapCameraConfig = {
   scrollDistance: 1100,
   noteStart: .82, noteEnd: .95,
-  layers: [
-    { asset: 'mapWide', focal: { x: .390, y: .448 }, zoomStart: 1, zoomEnd: 1.95, start: 0, end: .27 },
-    { asset: 'mapCloser', focal: { x: .350, y: .530 }, focalEnd: { x: .360, y: .450 }, zoomStart: 1, zoomEnd: 1.6, start: .23, end: .50 },
-    { asset: 'mapRegional', focal: { x: .458, y: .348 }, focalEnd: { x: .439, y: .370 }, zoomStart: 1.4, zoomEnd: 1.85, start: .46, end: .73 },
-    { asset: 'mapCity', focal: { x: .676, y: .269 }, zoomStart: 1.52, zoomEnd: 1.6, start: .69, end: .82 },
-  ] satisfies MapLayerConfig[],
 };
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 const ease = (v: number) => { const t = clamp(v); return t*t*(3-2*t); };
@@ -37,39 +27,20 @@ function annotationRect(anchor: Point, width: number, height: number, noteWidth:
 }
 
 export function sampleMapCamera(u: number, width: number, height: number): MapCameraPose[] {
-  const progress = clamp(u);
-  return mapCameraConfig.layers.map((layer, index) => {
-    const asset = assets[layer.asset];
-    const source = asset.sourceSize;
-    const fit = Math.max(width/source.width, height/source.height);
-    const amount = between(progress, layer.start, layer.end);
-    const shortFrame = height < 340;
-    // A short orientation has ample source resolution for a closer crop, which
-    // leaves room above the marker for the compact, readable annotation.
-    const finalZoom = index === 3 && shortFrame ? 1.96 : layer.zoomEnd;
-    const scale = mix(layer.zoomStart, finalZoom, amount);
-    const sw = source.width*fit, sh = source.height*fit;
-    const sourceFocal = asset.cameraFocalAnchor || layer.focal;
-    const destination = index === 3 ? asset.destinationAnchor || { x: .60, y: .49 } : ('focalEnd' in layer ? layer.focalEnd : undefined) || sourceFocal;
-    const focal = { x: mix(sourceFocal.x, destination.x, amount), y: mix(sourceFocal.y, destination.y, amount) };
-    const targetX = mix(.51, .54, index === 3 ? amount : .35);
-    const targetY = index === 3 ? mix(.40, shortFrame ? .95 : .76, amount) : index === 2 ? mix(.49, .41, amount) : .49;
-    // Clamp the actual art bounds so a pan cannot expose an empty strip.
-    const x = clamp(width*targetX-sw*scale*focal.x, width-sw*scale, 0);
-    const y = clamp(height*targetY-sh*scale*focal.y, height-sh*scale, 0);
-    const entered = index === 0 ? 1 : between(progress, layer.start, layer.start+.04);
-    const following = mapCameraConfig.layers[index+1];
-    const exited = following ? between(progress, following.start, following.start+.04) : 0;
-    return { width: sw, height: sh, x, y, scale, opacity: entered*(1-exited) };
-  });
+  // Exactly the approved single-scene camera, also used when video fails.
+  const t=clamp(u*12/11.4), amount=t*t*t*(t*(t*6-15)+10);
+  const scale=Math.exp(Math.log(3.3)*amount), fit=Math.max(width/1280,height/720);
+  const sw=1280*fit,sh=720*fit;
+  const cx=mix(.5,.390,amount),cy=mix(.5,.448,amount);
+  return [{width:sw,height:sh,x:width/2-cx*sw*scale,y:height/2-cy*sh*scale,scale,opacity:1}];
 }
 
 /** Frame-local illustration anchor; intentionally separate from real directions. */
 export function cameraAnchor(u: number, width: number, height: number): Point {
-  const layer = sampleMapCamera(u, width, height)[3];
-  const asset = assets.mapCity;
-  const anchor = asset.destinationAnchor || asset.cameraFocalAnchor || mapCameraConfig.layers[3].focal;
-  return { x: layer.x+anchor.x*layer.width*layer.scale, y: layer.y+anchor.y*layer.height*layer.scale };
+  // The paper art is not georeferenced. This illustration point is independent
+  // of the actual coordinates used by the directions link.
+  const layer = sampleMapCamera(u, width, height)[0];
+  return { x: layer.x+.390*layer.width*layer.scale, y: layer.y+.490*layer.height*layer.scale };
 }
 
 /** Called by the invitation's one controller after width/fonts/locale/image changes. */
@@ -84,7 +55,7 @@ export function configureMapGeometry(root: HTMLElement, viewportHeight=window.in
   const frameHeight = Math.min(480, Math.max(260, pinHeight-frameTop-35));
   section.style.setProperty('--map-pin-height', pinHeight+'px');
   section.style.setProperty('--map-frame-height', frameHeight+'px');
-  section.style.setProperty('--map-note-max-height',Math.max(110,frameHeight*(frameHeight<340?.95:.76)-60)+'px');
+  section.style.setProperty('--map-note-max-height',Math.max(110,cameraAnchor(1,frame.clientWidth,frameHeight).y-60)+'px');
   section.style.setProperty('--map-scroll-distance', mapCameraConfig.scrollDistance+'px');
   // offsetLeft/Top are local to map-pin, including during a sticky restoration.
   const finalAnchor = cameraAnchor(1, frame.clientWidth, frame.clientHeight);
@@ -98,12 +69,13 @@ export function configureMapGeometry(root: HTMLElement, viewportHeight=window.in
     cityAnchor: finalAnchor,
   };
   measured.set(root, geometry);
-  elements.set(root,{planes:Array.from(root.querySelectorAll<HTMLElement>('[data-map-layer]')),marker:root.querySelector<HTMLElement>('.venue-pin'),note});
+  elements.set(root,{planes:Array.from(root.querySelectorAll<HTMLElement>('[data-map-fallback]')),marker:root.querySelector<HTMLElement>('.venue-pin'),note});
   return geometry;
 }
 
 /** Pure progress-to-DOM draw: no timer, inertia, tween, or independent trigger. */
 export function drawMapCamera(root: HTMLElement, u: number) {
+  seekMapVideo(root,u);
   const geometry = measured.get(root) || configureMapGeometry(root);
   const { width, height } = geometry.frame;
   const poses = sampleMapCamera(u, width, height);
@@ -143,5 +115,6 @@ export function drawMapCamera(root: HTMLElement, u: number) {
 /** Shared static/reduced/error presentation with useful practical information. */
 export function showFinalMap(root: HTMLElement) {
   configureMapGeometry(root);
+  stopMapVideo(root);
   return drawMapCamera(root, 1);
 }

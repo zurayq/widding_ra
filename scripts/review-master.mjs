@@ -10,14 +10,14 @@ const diagnostic=process.env.INVITATION_REVIEW_DIAGNOSTIC==='1';
 function check(value,message){if(!value){report.errors.push(message);if(!diagnostic)assert(value,message);}}
 async function ready(page){await page.evaluate(()=>document.fonts.ready);await page.waitForFunction(()=>window.__weddingMotion?.knots?.length>2);await page.waitForTimeout(200);}
 async function move(page,y){await page.evaluate(y=>scrollTo(0,y),y);await page.waitForFunction(()=>Math.abs(Number(document.querySelector('.motion-layer').dataset.scroll)-scrollY)<.6);await page.waitForTimeout(40);}
-async function snapshot(page){return page.evaluate(()=>({scroll:scrollY,hearts:[...document.querySelectorAll('.traveller')].map(e=>e.style.cssText),routes:[...document.querySelectorAll('[data-reveal-route]')].map(e=>e.style.strokeDashoffset),camera:[...document.querySelectorAll('[data-map-layer]')].map(e=>e.style.cssText),note:document.querySelector('[data-map-note]').style.cssText,decorations:[...document.querySelectorAll('[data-decoration]')].map(e=>e.style.cssText)}));}
+async function snapshot(page){return page.evaluate(()=>({scroll:scrollY,hearts:[...document.querySelectorAll('.traveller')].map(e=>e.style.cssText),heartLayer:document.querySelector('.traveller-group').style.cssText,routes:[...document.querySelectorAll('[data-reveal-route]')].map(e=>e.style.strokeDashoffset),camera:[...document.querySelectorAll('[data-map-fallback]')].map(e=>e.style.cssText),note:document.querySelector('[data-map-note]').style.cssText,decorations:[...document.querySelectorAll('[data-decoration]')].map(e=>e.style.cssText)}));}
 try{
  for(const width of [320,390,430,1440]){
   const context=await browser.newContext({viewport:{width,height:844},locale:'en-US'}),page=await context.newPage();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/?inspect=1');await ready(page);
   check(await page.locator('.traveller').count()===2,'Exactly two main hearts');check(await page.locator('.locale-switch').count()===0,'No visible language switch');
-  check(await page.locator('[data-route]').count()===1,'Exactly one shared trail');check(await page.locator('.directions').count()===0,'Missing destination hides directions');check(await page.locator('.landmark').count()===0,'Unfinished skylines hidden');
+  check(await page.locator('[data-route]').count()===1,'Exactly one shared trail');check(await page.locator('.directions').count()===1,'Configured destination enables directions');check(await page.locator('.landmark').count()===0,'Unfinished skylines hidden');
   const initialRequests=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>r.name.includes('/assets/')).map(r=>r.name));
   check(!initialRequests.some(url=>/mapCity.webp/.test(url)),'Final map is not eagerly downloaded on opening');
   for(const asset of Object.values(assets)){
@@ -32,7 +32,9 @@ try{
     for(const [i,h]of [p.a,p.b].entries())for(const [j,b]of m.ink.entries())if(h.x+h.width/2>b.x+1&&h.x-h.width/2<b.x+b.width-1&&h.y+h.height/2>b.y+1&&h.y-h.height/2<b.y+b.height-1)hits.push({s,heart:i,box:j,h,b});
    }return{hits:hits.slice(0,20),hitCount:hits.length,separation,minSeparation,jump};
   });
-  check(math.hitCount===0,'Readable-content heart collisions at '+width+': '+math.hitCount);
+  check(await page.evaluate(()=>{const m=window.__weddingMotion;return getComputedStyle(document.querySelector('.traveller-group')).clipPath.includes('heart-content-clearance')&&m.ink.every(b=>m.heartClearance.some(h=>h.x<=b.x-4&&h.y<=b.y-4&&h.x+h.width>=b.x+b.width+4&&h.y+h.height>=b.y+b.height+4));}),'All readable ink has a heart occlusion hole at '+width);
+  check(await page.evaluate(()=>{const m=window.__weddingMotion;for(let s=240;s<m.geometry.map.y;s+=3){const p=m.sample(s);if(Math.abs(p.route.x-m.geometry.width/2)>13)return false;}return true;}),'Pair stays on the central dance curve '+width);
+  check(await page.evaluate(()=>{const m=window.__weddingMotion;let last=0,exchanges=0;for(let s=240;s<m.geometry.map.y;s+=3){const p=m.sample(s),lead=Math.sign(p.a.y-p.b.y);if(last&&lead&&last!==lead)exchanges++;if(lead)last=lead;}return exchanges>=3;}),'Hearts repeatedly exchange the lead instead of freezing '+width);
   check(math.separation<65,'Main pair stays close at '+width);check(math.jump<3,'Continuous small scroll movements at '+width);
   check(math.minSeparation>19,'Main hearts remain distinct at '+width);check(math.jump<.65,'Restrained per-scroll movement at '+width);
   check(await page.evaluate(()=>{const m=window.__weddingMotion,p=m.sample(m.geometry.maxScroll);return Math.abs(p.route.x-m.geometry.width/2)<1;}),'Final pair rests at centre '+width);
@@ -78,7 +80,8 @@ try{
   report.locales.push({device,stored,override,expected,overflow});await context.close();
  }
  for(const [now,state]of [['2026-10-17T14:59:58+03:00','before'],['2026-10-17T15:00:00+03:00','celebration'],['2026-10-17T23:59:59+03:00','celebration'],['2026-10-18T00:00:00+03:00','thanks']]){
-  const context=await browser.newContext();const page=await context.newPage();await page.clock.install({time:new Date(now)});await page.goto(base);await page.waitForTimeout(100);
+  const context=await browser.newContext();const page=await context.newPage();await page.clock.install({time:new Date(now)});await page.goto(base);
+  await page.locator(state==='before'?'.countdown-grid':'[data-countdown-state="'+state+'"]').waitFor({state:'attached'});
   check(state==='before'?await page.locator('.countdown-grid').count()===1:await page.locator('[data-countdown-state="'+state+'"]').count()===1,'Countdown state '+now);
   check((await page.locator('.countdown-paper h2').textContent())===(state==='before'?'Until the special day':state==='celebration'?'Our wedding day':'With love and gratitude'),'Correct countdown heading '+state);
   if(now.includes('23:59:59')){await page.clock.runFor(2000);check(await page.locator('[data-countdown-state="thanks"]').count()===1,'Wedding-day midnight transitions to thanks');}
@@ -90,7 +93,7 @@ try{
  }
  const context=await browser.newContext();await context.route('**/assets/*.webp',r=>r.abort());const page=await context.newPage();await page.goto(base);
  await page.evaluate(()=>scrollTo(0,document.body.scrollHeight));await page.waitForTimeout(500);
- check(await page.locator('[data-artwork="mapCity"][data-asset-state="error"]').count()===1,'Real image failure shows fallback');check(await page.locator('.landscape-preview').count()>0,'Map failure has a light fallback');await context.close();
+ check(await page.locator('[data-asset-state="error"]').count()>0,'Real image failure shows artwork fallbacks');check(await page.locator('[data-map-frame]').isVisible(),'Map remains present despite poster failures');check(await page.locator('[data-map-note]').isVisible(),'Image failure preserves location information');await context.close();
  const failure=await browser.newContext();await failure.addInitScript(()=>{const original=Element.prototype.getBoundingClientRect;Element.prototype.getBoundingClientRect=function(){const box=original.call(this);return this.matches('.resting-place')?new DOMRect(box.x,0,box.width,box.height):box;};});
  const failedPage=await failure.newPage();await failedPage.goto(base);await failedPage.waitForTimeout(300);check(await failedPage.locator('#invitation.calm').count()===1,'Initialization failure keeps static invitation');check(await failedPage.locator('[data-map-note]').isVisible(),'Failure keeps location information');await failure.close();
  console.log('Browser refinement review complete; '+report.errors.length+' errors.');

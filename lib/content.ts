@@ -3,7 +3,7 @@ export const wedding = {
   dateISO: '2026-10-17T15:00:00+03:00', timezone: 'Europe/Istanbul',
   dateLabel: '17 October 2026', timeLabel: '15:00',
   city: 'İzmit', region: 'Kocaeli', country: 'Türkiye',
-  venueName: '', address: '', latitude: '', longitude: '',
+  venueName: '', address: '', latitude: '40.7583737692164', longitude: '29.796404809521622',
   verse: 'وجعلناكم شعوبًا وقبائل لتعارفوا', useVerseArtwork: false,
 };
 export type VenueData = Pick<typeof wedding, 'venueName' | 'address' | 'latitude' | 'longitude' | 'city' | 'region' | 'country'>;

@@ -13,7 +13,7 @@ const range=(s:number,a:number,b:number)=>ease((s-a)/(b-a));
 const ns='http://www.w3.org/2000/svg';
 export function StoryMotion(){
  const layer=useRef<HTMLDivElement>(null),svg=useRef<SVGSVGElement>(null),defs=useRef<SVGDefsElement>(null),paths=useRef<SVGGElement>(null);
- const hearts=useRef<(HTMLDivElement|null)[]>([]),markers=useRef<(SVGCircleElement|null)[]>([]);
+ const hearts=useRef<(HTMLDivElement|null)[]>([]),markers=useRef<(SVGCircleElement|null)[]>([]),pairLayer=useRef<HTMLDivElement>(null);
  const [calibration,setCalibration]=useState(false);
  useLayoutEffect(()=>{
   gsap.registerPlugin(ScrollTrigger);
@@ -32,7 +32,7 @@ export function StoryMotion(){
    };return[measure('algeria_hart_map'),measure('palastine_hart_map')];
   };
   const place=(poses:[Pose,Pose])=>poses.forEach((p,i)=>gsap.set(hearts.current[i],{x:p.x-p.width/2,y:p.y-p.height/2,width:p.width,height:p.height,rotation:p.rotation,zIndex:p.depth}));
-  const staticFallback=()=>{trigger?.kill();root.classList.remove('enhanced');root.classList.add('calm');clear();place(origins(root.getBoundingClientRect()));svg.current!.style.opacity='0';showFinalMap(root);};
+  const staticFallback=()=>{trigger?.kill();root.classList.remove('enhanced');root.classList.add('calm');clear();pairLayer.current!.style.clipPath='none';pairLayer.current!.style.opacity='1';place(origins(root.getBoundingClientRect()));svg.current!.style.opacity='0';showFinalMap(root);};
   const build=()=>{
    if(disposed)return;trigger?.kill();clear();
    root.classList.toggle('enhanced',!media.matches);root.classList.toggle('calm',media.matches);
@@ -43,7 +43,7 @@ export function StoryMotion(){
    const box=(selector:string):Box=>{const b=root.querySelector(selector)!.getBoundingClientRect();return{x:b.left-main.left,y:b.top-main.top,width:b.width,height:b.height};};
    const initial=origins(main);
    initial.forEach((p,i)=>{markers.current[i]?.setAttribute('cx',String(p.x));markers.current[i]?.setAttribute('cy',String(p.y));});
-   if(media.matches){place(initial);svg.current!.style.opacity='0';showFinalMap(root);return;}
+   if(media.matches){pairLayer.current!.style.clipPath='none';pairLayer.current!.style.opacity='1';place(initial);svg.current!.style.opacity='0';showFinalMap(root);return;}
    const endViewport=matchMedia('(pointer: coarse)').matches?Math.max(viewportHeight,screen.availHeight):viewportHeight;
    const height=root.offsetHeight,maxScroll=Math.max(1,height-endViewport),map=box('[data-scene="map"]');
    const g:StoryGeometry={width:w,height,maxScroll,viewportHeight,origins:initial,verse:box('.verse-composition'),childhood:box('.childhood-slot'),adult:box('.adult-slot'),countdown:box('.countdown-card'),map,pinHeight:mapGeometry.pinHeight,mapFrame:mapGeometry.frame,note:mapGeometry.note,cityAnchor:{x:mapGeometry.frame.x+mapGeometry.cityAnchor.x,y:mapGeometry.cityAnchor.y},rest:box('.resting-place')};
@@ -78,6 +78,18 @@ export function StoryMotion(){
    const ending=box('.ending-line');contentMask.append(element('rect',{x:15,y:ending.y-7,width:w-30,height:ending.height+14,fill:'black'}));
    const mapHeading=element('rect',{x:15,y:map.y,width:w-30,height:Math.max(120,g.mapFrame.y-17),fill:'black'}),noteMask=element('rect',{x:0,y:0,width:0,height:0,fill:'black'});
    contentMask.append(mapHeading,noteMask);defs.current!.append(contentMask);paths.current!.setAttribute('mask','url(#route-content-clearance)');
+   // Let the central dance pass behind copy instead of sending the hearts to
+   // the screen edges or freezing their orbit. Even-odd holes protect the ink.
+   const heartClearance=ink.map(b=>({x:b.x-5,y:b.y-5,width:b.width+10,height:b.height+10}));
+   const heartClip=element('clipPath',{id:'heart-content-clearance',clipPathUnits:'userSpaceOnUse'});
+   const heartClipPath=element('path',{'clip-rule':'evenodd','fill-rule':'evenodd'});
+   heartClip.append(heartClipPath);defs.current!.append(heartClip);
+   pairLayer.current!.style.clipPath='url(#heart-content-clearance)';
+   const rectangle=(b:Box)=>`M${b.x},${b.y}h${b.width}v${b.height}h${-b.width}Z`;
+   // Overlapping holes must be unioned; separate even-odd rectangles would
+   // cancel in their overlap. A mask is unnecessary for the HTML heart layer.
+   const union=(boxes:Box[])=>{const merged:Box[]=[];for(const b of boxes){let item={...b},i=0;while(i<merged.length){const a=merged[i];if(item.x<a.x+a.width&&item.x+item.width>a.x&&item.y<a.y+a.height&&item.y+item.height>a.y){const x=Math.min(a.x,item.x),y=Math.min(a.y,item.y);item={x,y,width:Math.max(a.x+a.width,item.x+item.width)-x,height:Math.max(a.y+a.height,item.y+item.height)-y};merged.splice(i,1);i=0;}else i++;}merged.push(item);}return merged;};
+   const merged=union(heartClearance);
    const rendered: {route:RouteSpan;mask:SVGPathElement;path:SVGPathElement}[]=routes.map(route=>{
     const id='reveal-'+route.id,mask=element('mask',{id,maskUnits:'userSpaceOnUse',x:0,y:0,width:w,height});
     const solid=element('path',{d:route.d,fill:'none',stroke:'white','stroke-width':5,'stroke-linecap':'round','data-reveal-route':route.id})as SVGPathElement;
@@ -112,6 +124,15 @@ export function StoryMotion(){
     const u=clamp((s-map.y)/mapGeometry.duration),camera=drawMapCamera(root,u),pinned=Math.max(0,Math.min(mapGeometry.duration,s-map.y));
     mapHeading.setAttribute('y',String(map.y+pinned+17));
     if(camera.noteRect&&camera.noteReveal>.01){const b=camera.noteRect;for(const [key,value]of Object.entries({x:g.mapFrame.x+b.x-7,y:map.y+pinned+g.mapFrame.y+b.y-7,width:b.width+14,height:b.height+16}))noteMask.setAttribute(key,String(value));}else noteMask.setAttribute('width','0');
+    const headingHole={x:15,y:map.y+pinned+17,width:w-30,height:Math.max(120,g.mapFrame.y-17)};
+    const noteHole=camera.noteRect&&camera.noteReveal>.01?{x:g.mapFrame.x+camera.noteRect.x-7,y:map.y+pinned+g.mapFrame.y+camera.noteRect.y-7,width:camera.noteRect.width+14,height:camera.noteRect.height+16}:undefined;
+    const holes=union([...merged,headingHole,...(noteHole?[noteHole]:[])]);
+    heartClipPath.setAttribute('d',rectangle({x:0,y:0,width:w,height})+holes.map(rectangle).join(''));
+    // Fade the complete pair before an occlusion instead of visibly slicing a
+    // heart in half at the edge of a letter. Their hidden dance never resets.
+    let proximity=12;
+    for(const h of [p.a,p.b])for(const b of holes){const dx=Math.max(b.x-h.x-h.width/2-2,h.x-h.width/2-2-b.x-b.width,0),dy=Math.max(b.y-h.y-h.height/2-2,h.y-h.height/2-2-b.y-b.height,0);proximity=Math.min(proximity,Math.hypot(dx,dy));}
+    pairLayer.current!.style.opacity=String(ease(proximity/12));
     layer.current!.dataset.scroll=String(s);layer.current!.dataset.mapProgress=String(u);
    };
    const mainTop=root.getBoundingClientRect().top+scrollY;
@@ -120,7 +141,7 @@ export function StoryMotion(){
    const drawNative=()=>{lastNative=Math.max(0,Math.min(maxScroll,window.scrollY-mainTop));draw(lastNative);};
    drawNative();
    trigger=ScrollTrigger.create({trigger:root,start:'top top',end:'bottom bottom',onUpdate:drawNative,onRefresh:drawNative});
-   if(new URLSearchParams(location.search).has('inspect'))(window as Window&{__weddingMotion?:unknown}).__weddingMotion={geometry:g,knots,clearance,ink,routes,sample:(s:number)=>sampleJourney(knots,s)};
+   if(new URLSearchParams(location.search).has('inspect'))(window as Window&{__weddingMotion?:unknown}).__weddingMotion={geometry:g,knots,clearance,ink,heartClearance:merged,routes,sample:(s:number)=>sampleJourney(knots,s)};
   };
   const schedule=()=>{if(disposed||queued)return;queued=requestAnimationFrame(()=>{queued=0;try{build();ScrollTrigger.refresh();}catch(error){console.error('Invitation motion could not initialize',error);staticFallback();}});};
   try{build();}catch(error){console.error('Invitation motion could not initialize',error);staticFallback();}
@@ -132,5 +153,5 @@ export function StoryMotion(){
   setCalibration(process.env.NODE_ENV==='development'&&new URLSearchParams(location.search).has('anchors'));
   return()=>{disposed=true;cancelAnimationFrame(queued);trigger?.kill();observer.disconnect();window.removeEventListener('resize',resize);window.removeEventListener('invitation-countdown-layout',schedule);screen.orientation?.removeEventListener('change',orient);media.removeEventListener('change',schedule);root.classList.remove('enhanced','calm');clear();delete(window as Window&{__weddingMotion?:unknown}).__weddingMotion;};
  },[]);
- return <div className="motion-layer" ref={layer} aria-hidden="true"><svg className="route-svg" ref={svg}><defs ref={defs}/><g ref={paths}/>{calibration&&[0,1].map(i=><circle key={i}ref={node=>{markers.current[i]=node;}}r="15"stroke="#477f67"fill="none"/>)}</svg>{[0,1].map(i=><div className="traveller" data-heart={i}key={i}ref={node=>{hearts.current[i]=node;}}><Artwork id="palastine_small_hart"/></div>)}{calibration&&<p className="anchor-calibration">PNG anchor calibration · lib/assets.ts</p>}</div>;
+ return <div className="motion-layer" ref={layer} aria-hidden="true"><svg className="route-svg" ref={svg}><defs ref={defs}/><g ref={paths}/>{calibration&&[0,1].map(i=><circle key={i}ref={node=>{markers.current[i]=node;}}r="15"stroke="#477f67"fill="none"/>)}</svg><div ref={pairLayer} className="traveller-group" style={{position:'absolute',inset:0,pointerEvents:'none'}}>{[0,1].map(i=><div className="traveller" data-heart={i}key={i}ref={node=>{hearts.current[i]=node;}}><Artwork id="palastine_small_hart"/></div>)}</div>{calibration&&<p className="anchor-calibration">PNG anchor calibration · lib/assets.ts</p>}</div>;
 }

@@ -15,6 +15,7 @@ assert.equal(getTimeRemaining('2026-10-17T15:00:00', target), null);
 assert.equal(getTimeRemaining('invalid', target), null);
 const unset = { venueName: '', address: '', latitude: '', longitude: '', city: 'İzmit', region: 'Kocaeli', country: 'Türkiye' };
 assert.equal(buildDirectionsUrl(unset), '', 'A city alone must never enable venue directions');
+assert.equal(new URL(buildDirectionsUrl()).searchParams.get('destination'),'40.7583737692164,29.796404809521622','Directions use the supplied real coordinates');
 assert.equal(buildDirectionsUrl({ ...unset, venueName: 'Unverified venue label' }), '');
 assert.equal(new URL(buildDirectionsUrl({ ...unset, latitude: '0', longitude: '0' })).searchParams.get('destination'), '0,0');
 assert.equal(buildDirectionsUrl({ ...unset, latitude: '91', longitude: '1' }), '');

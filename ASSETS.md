@@ -30,7 +30,7 @@ Registry bounds are normalized against the full original canvas. Algeria's visib
 
 Both full portrait images remain visible. Precisely confined masks sample clean paper from the same image to cover baked English glyphs. Larger localized HTML captions use a warm torn-paper label within the former caption area, flowing vertically when text is enlarged. Faces, canvas edges, flowers and original adult names remain intact. Registry `composition.captionRegions` records original mask rectangles/polygons/paper samples; `composition.clearance` records meaningful artwork bounds. Text is never shrunk to an unreadably small width. Texture patches may show seams under magnification; no pixel-perfect reference match is claimed.
 
-Map geometry is configured per image in `lib/map-camera.ts`. Each has its own aspect fit, focus, scale, pan and brief blend. The final normalized illustration destination is `(0.60,0.49)`. It is an editable art anchor, not real venue coordinates. Geography registration remains approximate because supplied viewpoints differ.
+The four legacy map WebPs above are retained as source references, not rendered camera layers. The live stage now uses `map-zoom.mp4` (1280×720, 60fps, 12 seconds, 8,124,549 bytes) and matching `map-zoom-start.webp` / `map-zoom-end.webp` (1280×720). It is the approved single-image continuous zoom made from `9ADAB82F-2624-4AFF-8C29-9BC5A775AF48(1).jpeg`, not a blend between maps. The same camera is sampled in `lib/map-camera.ts` for the still-image video-error fallback. The illustration point `(0.390,0.490)` is only an art anchor; it is not georeferenced. Actual Google Maps directions use the supplied coordinates in `lib/content.ts`.
 
 ## Decorations, share artwork and fonts
 

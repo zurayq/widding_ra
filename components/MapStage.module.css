@@ -5,14 +5,21 @@
 .heading{text-align:center;position:relative;z-index:2;padding:0 25px}.heading h2{font-size:1.75rem;line-height:1.25;margin-top:7px}
 .frame{position:relative;flex:none;margin:18px 14px 35px;height:var(--map-frame-height);overflow:hidden;background:#f6eddc;border:1px solid #d5bd8e36;border-radius:48% 51% 44% 46% / 2% 3% 2% 3%;isolation:isolate;box-shadow:0 9px 28px #7862380a}
 .plane{position:absolute;transform-origin:0 0;will-change:transform,opacity;opacity:0;pointer-events:none;z-index:0}.plane[data-map-layer="3"]{opacity:1}.plane>:global(.artwork){width:100%;height:100%}
+.media{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.video,.finalStill{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.video{opacity:0}.fallbackPlane{position:absolute;left:0;top:0;transform-origin:0 0;display:none}.fallbackPlane img{display:block;width:100%;height:100%}
+:global(.enhanced) .fallbackPlane{display:block}:global(.enhanced) .finalStill{display:none}
+:global(.enhanced) .media[data-video-state="ready"] .video{opacity:1}
+:global(.enhanced) .media[data-video-state="ready"] .fallbackPlane{visibility:hidden}
+@media(prefers-reduced-motion:reduce){.video,.fallbackPlane{display:none!important}.finalStill{display:block!important}}
 .vignette{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,#fbf6ec66,transparent 12%,transparent 80%,#fbf6ecaa)}
-.marker{position:absolute;left:54%;top:76%;width:27px;height:35px;transform:translate(-50%,-100%);color:#a42d3b;z-index:5;pointer-events:none;filter:drop-shadow(0 2px 2px #6c461a24)}.marker svg{width:100%;height:100%}
-.annotation{position:absolute;left:54%;bottom:calc(24% + 46px);transform:translateX(-50%);width:calc(100% - 42px);max-width:282px;transform-origin:50% 100%;z-index:8;filter:drop-shadow(0 5px 6px #694b2822)}
+.marker{position:absolute;left:50%;top:63.86%;width:27px;height:35px;transform:translate(-50%,-100%);color:#a42d3b;z-index:5;pointer-events:none;filter:drop-shadow(0 2px 2px #6c461a24)}.marker svg{width:100%;height:100%}
+.annotation{position:absolute;left:50%;bottom:calc(36.14% + 46px);transform:translateX(-50%);width:calc(100% - 42px);max-width:282px;transform-origin:50% 100%;z-index:8;filter:drop-shadow(0 5px 6px #694b2822)}
 .annotation:after{content:'';position:absolute;left:var(--note-pointer-x,50%);top:calc(100% - 3px);height:var(--note-pointer-height,14px);width:1px;background:#9f7e55a1;pointer-events:none;z-index:-1}
 .paper{padding:15px 16px;text-align:center;background:#f7eedb;clip-path:polygon(0 2%,9% 0,20% 1%,33% 0,47% 1%,59% 0,75% 1%,90% 0,100% 2%,99% 18%,100% 35%,99% 52%,100% 71%,99% 98%,88% 100%,76% 98%,62% 100%,49% 98%,35% 100%,22% 98%,10% 100%,0 98%,1% 77%,0 59%,1% 39%,0 20%)}
 .paper h3{font-size:1.375rem;line-height:1.3;margin:8px 0;color:#60482f;overflow-wrap:anywhere;text-wrap:balance}.address,.city{font-size:.875rem;line-height:1.5;margin:6px 0;color:#70573b;overflow-wrap:anywhere}
 .details{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;margin:12px 0 3px;font-size:.875rem;color:#70573b}.details span+span{border-left:1px solid #c8b38a;padding-left:12px}
 .directions{display:flex;width:100%;align-items:center;justify-content:center;gap:18px;min-height:44px;margin-top:14px;padding:10px;text-decoration:none;border:0;border-radius:3px;color:#fff8ec;background:#a22d3a;font-size:1rem;line-height:1.3;cursor:pointer}
 .caption{position:absolute;z-index:3;bottom:10px;left:12px;right:12px;text-align:center;font-size:.6875rem;line-height:1.5;color:#644c30;pointer-events:none}
-.paper{max-height:var(--map-note-max-height,calc(var(--map-frame-height) * .76 - 60px));overflow:auto;scrollbar-width:thin;scrollbar-color:#aa8f6c #eadfcc}.paper:global(.note-scrollable){overscroll-behavior:contain}.paper:focus-visible{outline:2px solid #7b8061;outline-offset:-3px}
+.paper{max-height:var(--map-note-max-height,calc(var(--map-frame-height) * .6386 - 60px));overflow:auto;scrollbar-width:thin;scrollbar-color:#aa8f6c #eadfcc}.paper:global(.note-scrollable){overscroll-behavior:contain}.paper:focus-visible{outline:2px solid #7b8061;outline-offset:-3px}
 @media(prefers-reduced-motion:reduce){.stage{height:var(--map-pin-height)!important}.pin{position:relative!important}.plane{will-change:auto}.plane[data-map-layer="0"],.plane[data-map-layer="1"],.plane[data-map-layer="2"]{opacity:0!important}.plane[data-map-layer="3"]{opacity:1!important}.annotation,.marker{opacity:1!important;visibility:visible!important}}
