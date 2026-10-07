@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { wedding, buildDirectionsUrl } from '../lib/content.ts';
-import { getTimeRemaining } from '../lib/countdown.ts';
+import { getTimeRemaining,getWeddingState } from '../lib/countdown.ts';
 import { selectLocale, selectLocaleFromAcceptLanguage, formatWeddingDate, formatWeddingTime, translations } from '../lib/i18n.ts';
 
 assert.equal(wedding.dateISO, '2026-10-17T15:00:00+03:00');
@@ -22,12 +22,16 @@ const address = { ...unset, venueName: 'Example configured venue', address: 'Exa
 assert.equal(new URL(buildDirectionsUrl(address)).searchParams.get('destination'), 'Example configured venue, Example exact address, İzmit, Kocaeli, Türkiye');
 for (const [preferences, manual, expected] of [
   [['tr-TR', 'en-US'], null, 'tr'], [['en-US', 'tr-TR'], null, 'en'],
-  [['fr-FR', 'de-DE', 'tr-TR'], null, 'tr'], [['fr-FR', 'de-DE'], null, 'en'],
-  [['tr-TR'], 'en', 'en'], [['en-US'], 'tr', 'tr'],
+  [['fr-FR', 'de-DE', 'tr-TR'], null, 'en'], [['fr-FR', 'de-DE'], null, 'en'],
+  [['tr-TR'], 'en', 'tr'], [['en-US'], 'tr', 'en'],
 ]) assert.equal(selectLocale(preferences, manual), expected);
-assert.equal(selectLocaleFromAcceptLanguage('fr;q=1,tr-TR;q=0.8,en;q=0.3'), 'tr');
+assert.equal(selectLocaleFromAcceptLanguage('fr;q=1,tr-TR;q=0.8,en;q=0.3'), 'en');
 assert.equal(selectLocaleFromAcceptLanguage('tr;q=0,en-US;q=1'), 'en');
-assert.equal(selectLocaleFromAcceptLanguage('en-US,tr-TR;q=0.9', 'tr'), 'tr');
+assert.equal(selectLocaleFromAcceptLanguage('en-US,tr-TR;q=0.9', 'tr'), 'en');
+assert.equal(getWeddingState(wedding.dateISO,target-1),'before');
+assert.equal(getWeddingState(wedding.dateISO,target),'celebration');
+assert.equal(getWeddingState(wedding.dateISO,Date.parse('2026-10-17T23:59:59+03:00')),'celebration');
+assert.equal(getWeddingState(wedding.dateISO,Date.parse('2026-10-18T00:00:00+03:00')),'thanks');
 assert.equal(formatWeddingDate('en', wedding.dateISO, wedding.timezone), '17 October 2026');
 assert.equal(formatWeddingDate('tr', wedding.dateISO, wedding.timezone), '17 Ekim 2026');
 for (const locale of ['en', 'tr']) assert.equal(formatWeddingTime(locale, wedding.dateISO, wedding.timezone), '15:00');

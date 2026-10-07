@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useId, useState, type CSSProperties } from 'react';
+import { useId, type CSSProperties } from 'react';
+import {useArtworkLoad} from './useArtworkLoad';
 import { assets, type Bounds, type CaptionRegion } from '../lib/assets';
 import { useLocale } from './LocaleProvider';
 import styles from './PortraitComposition.module.css';
@@ -29,55 +30,35 @@ export function PortraitComposition({ kind, caption, alt }: {
   const captions = splitCaption(caption, composition.captionRegions.length);
   const uid = useId().replaceAll(':', '');
   const {copy} = useLocale();
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    // SSR images can fail before React attaches onError; a probe also covers that case.
-    let active=true;
-    const probe=new Image();
-    probe.onerror=()=>{if(active){setFailed(true);console.error('Supplied invitation portrait could not load: '+asset.filename);}};
-    probe.src=asset.src;
-    return()=>{active=false;probe.onerror=null;};
-  },[asset.src,asset.filename]);
+  const {ref,status,requested,setStatus}=useArtworkLoad(asset.src);
   const rectanglePath = (region: CaptionRegion): string => {
     if (region.polygon) return region.polygon.map((point, i) => (i ? 'L' : 'M') + point.x * width + ' ' + point.y * height).join(' ') + 'Z';
     const { x, y, width: rw, height: rh } = region.bounds;
     return 'M' + x * width + ' ' + y * height + 'h' + rw * width + 'v' + rh * height + 'h-' + rw * width + 'Z';
   };
-  if (failed) return <figure className={styles.unavailable} data-composition={kind} data-artwork={asset.id} data-asset-state="error">
+  const paperMask=(maskId:string,source:string|undefined)=><svg className={styles.captionMask} viewBox={'0 0 '+width+' '+height} aria-hidden="true">
+    <defs>{composition.captionRegions.map((region,index)=>{const sample=region.paperSample;return <pattern key={index} id={maskId+'-paper-'+index} patternUnits="userSpaceOnUse" width={sample.width*width} height={sample.height*height}><image href={source} x={-sample.x*width} y={-sample.y*height} width={width} height={height}/></pattern>;})}</defs>
+    {composition.captionRegions.map((region,index)=><path key={index} d={rectanglePath(region)} fill={'url(#'+maskId+'-paper-'+index+')'}/>)}
+  </svg>;
+  if (status==='error') return <figure className={styles.unavailable} data-composition={kind} data-artwork={asset.id} data-asset-state="error">
     <p>{copy.assetUnavailable}</p><figcaption>{caption.replaceAll('\n', ' ')}</figcaption>
   </figure>;
-  return <figure className={styles.composition} data-composition={kind} data-artwork={asset.id}
-    style={{ aspectRatio: width / height }}>
+  return <figure className={styles.composition+' '+styles[kind]} data-composition={kind} data-artwork={asset.id} data-asset-state={status}>
+    <div ref={ref} className={styles.imageCanvas} style={{aspectRatio:width/height}}>
     {/* The source PNG is intact. Only the original English letter regions receive paper from the same artwork. */}
-    <img className={styles.original} src={asset.src} width={width} height={height} alt={alt} loading="eager" decoding="async" onError={()=>{
-      setFailed(true);console.error('Supplied invitation portrait could not load: ' + asset.filename);
+    <img className={styles.original} src={asset.src} width={width} height={height} alt={alt} loading="lazy" decoding="async" onError={()=>{
+      setStatus('error');console.error('Supplied invitation portrait could not load: ' + asset.filename);
     }}/>
-    <svg className={styles.captionMask} viewBox={'0 0 ' + width + ' ' + height} aria-hidden="true">
-      <defs>
-        {composition.captionRegions.map((region, index) => {
-          const sample = region.paperSample;
-          return <pattern key={index} id={uid + '-paper-' + index} patternUnits="userSpaceOnUse"
-            width={sample.width * width} height={sample.height * height}>
-            <image href={asset.src} x={-sample.x * width} y={-sample.y * height} width={width} height={height}/>
-          </pattern>;
-        })}
-      </defs>
-      {composition.captionRegions.map((region, index) => <path key={index} d={rectanglePath(region)} fill={'url(#' + uid + '-paper-' + index + ')'}/>)}
-    </svg>
+    {paperMask(uid,requested?asset.src:undefined)}
+    <noscript>{paperMask(uid+'-static',asset.src)}</noscript>
+    {composition.clearance.map(({ name, bounds }) => <span key={name} data-clearance={name}
+      className={styles.clearance} style={placement(bounds)} aria-hidden="true"/>)}
+    </div>
     <figcaption className={'portrait-caption ' + styles.caption} data-portrait-caption={kind}>
       {composition.captionRegions.map((region, index) => {
         const text = captions[index];
-        const textBounds = region.textBounds ?? region.bounds;
-        const usableWidth = textBounds.width * width - 10;
-        // Approximate serif widths conservatively; the browser keeps all labels on their original paper strip.
-        const fittedSize = region.multiline ? region.fontSize : Math.min(region.fontSize, usableWidth / Math.max(1, text.length * .69));
-        return <span className={styles.captionLine + (region.multiline ? ' ' + styles.multiline : '')} data-caption-line={index} key={index} style={{
-          ...placement(textBounds), transform: 'rotate(' + (region.rotation ?? 0) + 'deg)',
-          fontSize: fittedSize / width * 100 + 'cqi',
-        }}>{text}</span>;
+        return <span className={styles.captionLine} data-caption-line={index} key={index}>{text}</span>;
       })}
     </figcaption>
-    {composition.clearance.map(({ name, bounds }) => <span key={name} data-clearance={name}
-      className={styles.clearance} style={placement(bounds)} aria-hidden="true"/>)}
   </figure>;
 }

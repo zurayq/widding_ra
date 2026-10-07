@@ -9,13 +9,21 @@ export type StoryGeometry = {
   origins: [Pose, Pose]; verse: Box; childhood: Box; adult: Box; countdown: Box;
   map: Box; pinHeight: number; mapFrame: Box; note: Box;
   cityAnchor: { x: number; y: number }; rest: Box;
+  clearance?:Box[];
 };
+type Avoidance={top:number;bottom:number;left:number;right:number;phase?:number};
+const avoidance=new WeakMap<Knot[],{width:number;groups:Avoidance[]}>();
 export const choreography = {
   visibleHeartWidth: 24, visibleHeartRatio: 297 / 253, tiltLimit: 8,
-  mapScrollDistance: 1120, centreSway: 12, halfSeparation: 20, leadDistance: 10,
+  mapScrollDistance: 1120, centreSway: 12, halfSeparation: 20, leadDistance: 11,
 };
 const clip = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
 const ease = (n: number) => { const t = clip(n, 0, 1); return t * t * (3 - 2 * t); };
+const distinctOffset=(dx:number,dy:number)=>{
+ const length=Math.hypot(dx,dy),minimum=12.5;
+ const safe=minimum+(length-minimum+Math.sqrt((length-minimum)**2+.04))/2;
+ const factor=safe/Math.max(.000001,length);return{dx:dx*factor,dy:dy*factor};
+};
 
 /** The route moves through the centre; only the small pair offset performs the dance. */
 export function buildJourney(g: StoryGeometry): Knot[] {
@@ -28,7 +36,7 @@ export function buildJourney(g: StoryGeometry): Knot[] {
     knots.push({ scroll, a, b, route: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, beat, dance });
   };
   const pair = (scroll: number, x: number, y: number, phase: number, beat: string, calm = 1) => {
-    const dance = { phase, radiusX: 17 + 3 * calm, radiusY: choreography.leadDistance * calm, tilt: 6 * calm };
+    const dance = { phase, radiusX: 17 + 3 * calm, radiusY: choreography.leadDistance * Math.min(1,calm/.15), tilt: 6 * calm };
     const dx = Math.cos(phase) * dance.radiusX, dy = Math.sin(phase) * dance.radiusY;
     add(scroll, pose(x - dx, y - dy, -Math.sin(phase) * dance.tilt), pose(x + dx, y + dy, Math.sin(phase) * dance.tilt, 3), beat, dance);
   };
@@ -69,12 +77,28 @@ export function buildJourney(g: StoryGeometry): Knot[] {
   pair(below, centre + 4, below + top + g.note.y + g.note.height + 46, Math.PI * 5.8, 'below the note', .15);
   const releaseY = Math.min(g.pinHeight - 42, top + g.note.y + g.note.height + 78);
   pair(g.map.y + duration, centre, g.map.y + duration + releaseY, Math.PI * 6, 'pin release', 0);
-  beat(g.rest.y - 88, 4, 6, 'quiet descent', 0);
-  beat(g.rest.y, 0, 6, 'rest', 0);
+  const release=g.map.y+duration;
+  const restScroll=Math.max(release+80,Math.min(g.maxScroll-40,g.rest.y-focus));
+  const releaseDocY=knots.at(-1)!.route.y;
+  pair(release+(restScroll-release)*.48,centre+4,releaseDocY+(g.rest.y-releaseDocY)*.48,Math.PI*6,'quiet descent',0);
+  pair(restScroll,centre,g.rest.y,Math.PI*6,'rest',0);
   if (g.maxScroll > knots.at(-1)!.scroll) {
     const last = knots.at(-1)!;
     add(g.maxScroll, last.a, last.b, 'rest hold', last.dance);
   }
+  const groups:Avoidance[]=[];
+  // Copy below the resting point is never crossed; its approach envelope must
+  // not pull the settled pair away from the invitation's centre.
+  const boxes=(g.clearance||[]).filter(b=>b.y>g.verse.y-45&&b.y<g.rest.y-20&&(b.y<g.map.y-35||b.y>=g.map.y+g.map.height)).sort((a,b)=>a.y-b.y);
+  for(const box of boxes){
+   // Include complete rows, including the leftmost countdown digit and label.
+   // The shared bypass must not encounter copy outside the original centre lane.
+   const last=groups.at(-1);
+   if(last&&box.y-last.bottom<105){last.bottom=Math.max(last.bottom,box.y+box.height);last.left=Math.min(last.left,box.x);last.right=Math.max(last.right,box.x+box.width);}
+   else groups.push({top:box.y,bottom:box.y+box.height,left:box.x,right:box.x+box.width});
+  }
+  for(const group of groups){const phase=sampleJourney(knots,Math.max(231,group.top-focus-130)).dance?.phase||0;group.phase=Math.round((phase-Math.PI/2)/Math.PI)*Math.PI+Math.PI/2;}
+  avoidance.set(knots,{width:w,groups});
   return knots;
 }
 
@@ -103,16 +127,18 @@ export function sampleJourney(knots: Knot[], scroll: number): Omit<Knot, 'beat' 
   });
   const route = { x: field(k => k.route.x), y: field(k => k.route.y) };
   const poses: [Pose, Pose] = [body('a'), body('b')];
+  let dance:Dance|undefined;
   const join = knots.find(k => k.beat === 'join')!.scroll;
   if (scroll > join) {
     const phase = field(k => k.dance?.phase ?? 0);
     const rx = field(k => k.dance?.radiusX ?? choreography.halfSeparation);
     const ry = field(k => k.dance?.radiusY ?? choreography.leadDistance);
     const tilt = field(k => k.dance?.tilt ?? 6);
+    dance={phase,radiusX:rx,radiusY:ry,tilt};
     // Blend out the measured country anchors with a zero-slope envelope. The
     // analytic orbit thereafter keeps both hearts beside one shared curve.
     const joined = ease((scroll - join) / 100);
-    const dx = Math.cos(phase) * rx, dy = Math.sin(phase) * ry;
+    const {dx,dy}=distinctOffset(Math.cos(phase)*rx,Math.sin(phase)*ry);
     const depthA = Math.sin(phase) >= 0 ? 2 : 3;
     poses.forEach((pose, index) => {
       const sign = index === 0 ? -1 : 1;
@@ -125,5 +151,25 @@ export function sampleJourney(knots: Knot[], scroll: number): Omit<Knot, 'beat' 
   // The departure blend interpolates two measured poses, so its exact average
   // can differ slightly from interpolating their centre independently. Trace
   // the actual pair centre throughout, including that short handoff.
-  return { a: poses[0], b: poses[1], route: { x: (poses[0].x + poses[1].x) / 2, y: (poses[0].y + poses[1].y) / 2 } };
+  const plan=avoidance.get(knots);
+  if(plan&&scroll>join+100){
+   const cy=(poses[0].y+poses[1].y)/2,cx=(poses[0].x+poses[1].x)/2;
+   let offsetPower=0,narrowPower=0,phaseSum=0;const half=poses[0].width/2;
+   for(const group of plan.groups){
+    const amount=ease((cy-(group.top-130))/100)*(1-ease((cy-(group.bottom+30))/100));
+    const narrow=group.left-half-5<37,lane=Math.max(half+5,group.left-half-(narrow?7:24));
+    offsetPower+=Math.max(0,(cx-lane)*amount)**4;
+    if(narrow){const power=amount**4;narrowPower+=power;phaseSum+=power*group.phase!;}
+   }
+   if(offsetPower>0&&dance){
+    // Smoothly combine overlapping bypasses instead of switching winners.
+    // Blend orbit angles into a stable slim formation, avoiding merged bodies.
+    const compression=Math.min(1,narrowPower**.25);
+    const angle=dance.phase*(1-compression)+(narrowPower?phaseSum/narrowPower:0)*compression;
+    const {dx,dy}=distinctOffset(((1-compression)*dance.radiusX+3*compression)*Math.cos(angle),((1-compression)*dance.radiusY+14*compression)*Math.sin(angle));
+    const x=Math.max(half+Math.abs(dx)+2,cx-offsetPower**.25);
+    poses[0].x=x-dx;poses[1].x=x+dx;poses[0].y=cy-dy;poses[1].y=cy+dy;
+   }
+  }
+  return { a: poses[0], b: poses[1], dance, route: { x: (poses[0].x + poses[1].x) / 2, y: (poses[0].y + poses[1].y) / 2 } };
 }

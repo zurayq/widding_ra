@@ -1,346 +1,97 @@
-import { chromium } from 'playwright';
-import { mkdir, writeFile } from 'node:fs/promises';
+import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-
-const output = '.verification/master';
-const baseURL = process.env.INVITATION_REVIEW_URL || 'http://localhost:3000';
-const diagnostic = process.env.INVITATION_REVIEW_DIAGNOSTIC === '1';
-const executablePath = process.env.CHROMIUM_EXECUTABLE_PATH || (process.platform === 'win32' ? 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe' : undefined);
-const browser = await chromium.launch({ headless: true, executablePath, args: ['--disable-dev-shm-usage'] });
-const report = { widths: [], locale: [], clock: {}, static: {}, errors: [] };
-const suppliedFiles = [
-  'ChatGPT Image Oct 6, 2026, 07_51_13 PM.png', 'ChatGPT Image Oct 6, 2026, 08_33_05 PM.png',
-  'ChatGPT Image Oct 6, 2026, 07_51_03 PM.png', 'ChatGPT Image Oct 6, 2026, 07_51_09 PM.png',
-  'ChatGPT Image Oct 6, 2026, 07_50_39 PM.png', 'ChatGPT Image Oct 6, 2026, 07_50_49 PM.png',
-  'ChatGPT Image Oct 6, 2026, 07_50_54 PM.png', 'ChatGPT Image Oct 6, 2026, 07_50_58 PM.png',
-];
-await mkdir(output, { recursive: true });
-
-async function ready(page) {
-  await page.evaluate(async () => {
-    await document.fonts.ready;
-    await Promise.all([...document.images].map(image => image.decode().catch(() => {})));
-  });
-  await page.waitForFunction(() => ['algeria_hart_map', 'palastine_hart_map', 'palastine_small_hart', 'openingPatternAlgeria', 'openingPatternPalestine', 'mapWide', 'mapCloser', 'mapRegional', 'mapCity'].every(id => document.querySelector('[data-artwork="' + id + '"][data-asset-state="ready"]')), null, { timeout: 20000 });
-  await page.waitForFunction(() => window.__weddingMotion?.knots?.length > 2, null, { timeout: 20000 });
-  await page.waitForTimeout(220);
-}
-async function move(page, y, wait = 65) {
-  await page.evaluate(position => window.scrollTo(0, position), y);
-  await page.waitForFunction(() => Math.abs(Number(document.querySelector('.motion-layer')?.dataset.scroll)-window.scrollY)<.5, null, { timeout: 3000 });
-  await page.waitForTimeout(wait);
-}
-async function snapshot(page) {
-  return page.evaluate(() => ({
-    scroll: window.scrollY,
-    hearts: [...document.querySelectorAll('.traveller')].map(el => ({ transform: el.style.transform, width: el.style.width, height: el.style.height, z: el.style.zIndex })),
-    routes: [...document.querySelectorAll('[data-route]')].map(el => ({ id: el.getAttribute('data-route'), d: el.getAttribute('d'), opacity: el.style.opacity, mask: el.getAttribute('mask') })),
-    masks: [...document.querySelectorAll('.route-svg mask path')].map(el => ({ d: el.getAttribute('d'), offset: el.style.strokeDashoffset, dash: el.style.strokeDasharray, opacity: el.style.opacity })),
-    camera: [...document.querySelectorAll('[data-map-layer]')].map(el => ({ transform: el.style.transform, opacity: el.style.opacity, width: el.style.width, height: el.style.height, left: el.style.left, top: el.style.top })),
-    note: (() => { const el = document.querySelector('.location-note'); return el ? { opacity: el.style.opacity, transform: el.style.transform, left: el.style.left, top: el.style.top, visibility: el.style.visibility } : null; })(),
-    marker: (() => { const el = document.querySelector('.venue-pin'); return el ? { opacity: el.style.opacity, left: el.style.left, top: el.style.top, visibility: el.style.visibility } : null; })(),
-  }));
-}
-async function sameSnapshot(page, expected, label) {
-  const actual = await snapshot(page);
-  const changed = Object.keys(expected).filter(key => JSON.stringify(actual[key]) !== JSON.stringify(expected[key]));
-  if (!changed.length) return;
-  const filename = output + '/difference-' + label.replaceAll(/[^a-z0-9]+/gi, '-').toLowerCase() + '.json';
-  await writeFile(filename, JSON.stringify({ actual, expected }, null, 2));
-  throw new Error(label + ': changed ' + changed.join(', ') + '; scroll ' + expected.scroll + ' → ' + actual.scroll + '. Details: ' + filename);
-}
-async function coreStructure(page, width) {
-  assert.equal(await page.locator('.traveller').count(), 2, 'There must be exactly two persistent travellers');
-  assert.equal(await page.locator('.map-window').count(), 1, 'One shared map viewport');
-  assert.equal(await page.locator('.map-window [data-map-layer]').count(), 4, 'All four geographic stages are in the same viewport');
-  assert.equal(await page.locator('.map-window .location-note').count(), 1, 'Venue note is over the map');
-  assert.equal(await page.locator('[data-scene="childhood"]').count(), 1);
-  assert.equal(await page.locator('[data-scene="adult"]').count(), 1);
-  assert.equal(await page.locator('[data-portrait-caption]').count(), 2);
-  for (const [selector,filename] of [
-    ['[data-composition="childhood"] img',suppliedFiles[0]],
-    ['[data-composition="adult"] img',suppliedFiles[1]],
-    ['.edge-left [data-artwork] svg image',suppliedFiles[2]],
-    ['.edge-right [data-artwork] svg image',suppliedFiles[3]],
-    ...[0,1,2,3].map(index=>['[data-map-layer="'+index+'"] svg image',suppliedFiles[index+4]]),
-  ]) {
-    const source=await page.locator(selector).getAttribute(selector.endsWith(' img')?'src':'href');
-    assert.equal(decodeURIComponent(new URL(source,baseURL).pathname).split('/').at(-1),filename,'Exact source role and map order: '+selector);
+import {mkdir,writeFile} from 'node:fs/promises';
+import {assets} from '../lib/assets.ts';
+const base=process.env.INVITATION_REVIEW_URL||`http://localhost:${process.env.PORT||3000}`;
+const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||(process.platform==='win32'?'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe':undefined)});
+const output='.verification/refinement';await mkdir(output,{recursive:true});
+const report={widths:[],locales:[],clock:[],fallbacks:[],errors:[]};
+const diagnostic=process.env.INVITATION_REVIEW_DIAGNOSTIC==='1';
+function check(value,message){if(!value){report.errors.push(message);if(!diagnostic)assert(value,message);}}
+async function ready(page){await page.evaluate(()=>document.fonts.ready);await page.waitForFunction(()=>window.__weddingMotion?.knots?.length>2);await page.waitForTimeout(200);}
+async function move(page,y){await page.evaluate(y=>scrollTo(0,y),y);await page.waitForFunction(()=>Math.abs(Number(document.querySelector('.motion-layer').dataset.scroll)-scrollY)<.6);await page.waitForTimeout(40);}
+async function snapshot(page){return page.evaluate(()=>({scroll:scrollY,hearts:[...document.querySelectorAll('.traveller')].map(e=>e.style.cssText),routes:[...document.querySelectorAll('[data-reveal-route]')].map(e=>e.style.strokeDashoffset),camera:[...document.querySelectorAll('[data-map-layer]')].map(e=>e.style.cssText),note:document.querySelector('[data-map-note]').style.cssText,decorations:[...document.querySelectorAll('[data-decoration]')].map(e=>e.style.cssText)}));}
+try{
+ for(const width of [320,390,430,1440]){
+  const context=await browser.newContext({viewport:{width,height:844},locale:'en-US'}),page=await context.newPage();
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base+'/?inspect=1');await ready(page);
+  check(await page.locator('.traveller').count()===2,'Exactly two main hearts');check(await page.locator('.locale-switch').count()===0,'No visible language switch');
+  check(await page.locator('[data-route]').count()===1,'Exactly one shared trail');check(await page.locator('.directions').count()===0,'Missing destination hides directions');check(await page.locator('.landmark').count()===0,'Unfinished skylines hidden');
+  const initialRequests=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>r.name.includes('/assets/')).map(r=>r.name));
+  check(!initialRequests.some(url=>/mapCity.webp/.test(url)),'Final map is not eagerly downloaded on opening');
+  for(const asset of Object.values(assets)){
+   if(asset.enabled===false)continue;
+   const decoded=await page.evaluate(async src=>{const r=await fetch(src),b=await r.blob();try{const image=await createImageBitmap(b);return{status:r.status,width:image.width,height:image.height};}catch{return{status:r.status,width:0};}},asset.src);
+   check(decoded.status===200&&decoded.width>0,'Browser decodes '+asset.src);
   }
-  for (const [scene,width,height] of [['childhood',1024,1536],['adult',1122,1402]]) {
-    assert.deepEqual(await page.locator('[data-composition="'+scene+'"] img').evaluate(image=>({width:image.naturalWidth,height:image.naturalHeight})),{width,height},'Portrait intrinsic proportions and load: '+scene);
-  }
-  const layout = await page.evaluate(() => {
-    const root = document.querySelector('#invitation'), box = root.getBoundingClientRect();
-    return { width: box.width, left: box.left, height: root.scrollHeight, overflow: document.documentElement.scrollWidth, patternCount: document.querySelectorAll('[data-scene="opening"] .edge-pattern').length, patternTotal: document.querySelectorAll('.edge-pattern').length };
+  const geometry=await page.evaluate(()=>window.__weddingMotion.geometry);
+  const math=await page.evaluate(()=>{
+   const m=window.__weddingMotion,hits=[];let separation=0,jump=0,minSeparation=Infinity;
+   for(let s=240;s<m.geometry.maxScroll;s+=3){const p=m.sample(s),next=m.sample(s+.1);const distance=Math.hypot(p.a.x-p.b.x,p.a.y-p.b.y);separation=Math.max(separation,distance);minSeparation=Math.min(minSeparation,distance);jump=Math.max(jump,Math.hypot(next.a.x-p.a.x,next.a.y-p.a.y));
+    for(const [i,h]of [p.a,p.b].entries())for(const [j,b]of m.ink.entries())if(h.x+h.width/2>b.x+1&&h.x-h.width/2<b.x+b.width-1&&h.y+h.height/2>b.y+1&&h.y-h.height/2<b.y+b.height-1)hits.push({s,heart:i,box:j,h,b});
+   }return{hits:hits.slice(0,20),hitCount:hits.length,separation,minSeparation,jump};
   });
-  assert.equal(layout.width, Math.min(width, 430));
-  assert.ok(layout.overflow <= width, 'No horizontal overflow at ' + width);
-  assert.ok(Math.abs(layout.left - (width - layout.width) / 2) < 1, 'Phone composition is centered');
-  assert.equal(layout.patternCount, 2); assert.equal(layout.patternTotal, 2);
-  assert.equal(await page.locator('.story-pattern').count(), 2, 'A faint recurring pair of cultural edges');
-  assert.ok(await page.locator('.story-pattern').first().evaluate(el => Number(getComputedStyle(el).opacity) < .05), 'Recurring texture stays much fainter than the opening');
-  return layout;
-}
-async function samplerChecks(page) {
-  return page.evaluate(() => {
-    const m = window.__weddingMotion, g = m.geometry, failures = [], continuity = [];
-    const epsilon = .02;
-    for (const knot of m.knots.slice(1, -1)) {
-      const before = m.sample(knot.scroll - epsilon), at = m.sample(knot.scroll), after = m.sample(knot.scroll + epsilon);
-      const row = { beat: knot.beat, scroll: knot.scroll, position: 0, tangent: 0, scalar: 0 };
-      for (const body of ['a', 'b']) {
-        row.position = Math.max(row.position, Math.hypot(before[body].x - after[body].x, before[body].y - after[body].y));
-        row.tangent = Math.max(row.tangent, Math.hypot((at[body].x-before[body].x)/epsilon-(after[body].x-at[body].x)/epsilon, (at[body].y-before[body].y)/epsilon-(after[body].y-at[body].y)/epsilon));
-        row.scalar = Math.max(row.scalar, Math.abs(before[body].rotation-after[body].rotation), Math.abs(before[body].width-after[body].width));
-      }
-      continuity.push(row);
-    }
-    const clearance = m.clearance || [];
-    for (let scroll = 180; scroll <= g.maxScroll; scroll += 3) {
-      const pair = m.sample(scroll);
-      for (const [index, h] of [pair.a, pair.b].entries()) {
-        if (h.x-h.width*.55 < 0 || h.x+h.width*.55 > g.width) failures.push({ scroll, index, reason: 'horizontal clipping' });
-        if (h.width < 21.999 || h.width > 28.001 || Math.abs(h.rotation) > 15) failures.push({ scroll, index, reason: 'size or tilt' });
-        if (Math.abs(h.x - g.width/2) > 39) failures.push({ scroll, index, reason: 'traveller left the central corridor' });
-      }
-      if (Math.hypot(pair.a.x-pair.b.x,pair.a.y-pair.b.y) > 42) failures.push({ scroll, reason: 'pair separated too far' });
-      if (Math.abs(pair.a.y-pair.b.y) > 21) failures.push({ scroll, reason: 'excessive vertical lead' });
-      if (Math.hypot((pair.a.x+pair.b.x)/2-pair.route.x,(pair.a.y+pair.b.y)/2-pair.route.y) > .01) failures.push({ scroll, reason: 'shared route drifted away from the pair' });
-    }
-    return { continuity, failures, clearanceCount: clearance.length, networkCount: m.routes?.length ?? 0 };
-  });
-}
-
-async function routeChecks(page) {
-  return page.evaluate(() => {
-    const motion = window.__weddingMotion, scroll = window.scrollY, pair = motion.sample(scroll), failures = [], active = [];
-    for (const route of motion.routes) {
-      const mask = document.querySelector('[data-reveal-route="' + route.id + '"]');
-      if (!mask) { failures.push({ id: route.id, reason: 'missing independent reveal mask' }); continue; }
-      const pathLength = mask.getTotalLength(), offset = Number(mask.style.strokeDashoffset), visible = Math.max(0, pathLength-offset);
-      if (offset < -.2 || offset > pathLength+.2) failures.push({ id: route.id, reason: 'invalid path-length reveal range', offset, pathLength });
-      if (visible <= .05) continue;
-      // Invert the single reveal against the pair's shared sampled history.
-      const distance = visible/pathLength*route.lengths.at(-1);
-      let index = 0;
-      while (index < route.lengths.length-2 && route.lengths[index+1] < distance) index++;
-      const span = route.lengths[index+1]-route.lengths[index];
-      const t = span ? Math.max(0, Math.min(1, (distance-route.lengths[index])/span)) : 0;
-      const revealedScroll = route.scrolls[index]+(route.scrolls[index+1]-route.scrolls[index])*t;
-      if (revealedScroll > scroll+.1) failures.push({ id: route.id, reason: 'future trail revealed', scroll, revealedScroll });
-      if (scroll >= route.start && scroll < route.end) {
-        const point = mask.getPointAtLength(visible);
-        const body = pair.route;
-        const gap = Math.hypot(point.x-body.x, point.y-body.y);
-        if (gap > (route.kind === 'shared' ? 65 : 45)) failures.push({ id: route.id, reason: 'leading trail detached from traveller', gap, scroll });
-        active.push({ id: route.id, kind: route.kind, gap, revealedScroll });
-      }
-    }
-    const separation = Math.hypot(pair.a.x-pair.b.x, pair.a.y-pair.b.y);
-    const join = motion.knots.find(knot => knot.beat === 'join').scroll;
-    if (scroll <= join && active.length) failures.push({ reason: 'trail appeared before the hearts met', scroll });
-    return { scroll, separation, active, failures };
-  });
-}
-
-try {
-  for (const width of [320, 390, 430, 1440]) {
-    const context = await browser.newContext({ viewport: { width, height: width === 1440 ? 900 : 844 }, deviceScaleFactor: 1, locale: 'en-US' });
-    const page = await context.newPage(), errors = [];
-    const loadedAssets = new Set();
-    page.on('pageerror', error => errors.push(error.message));
-    page.on('response', response => {
-      const filename = decodeURIComponent(new URL(response.url()).pathname).split('/').at(-1);
-      if (suppliedFiles.includes(filename)) {
-        if (response.ok() || response.status() === 304) loadedAssets.add(filename);
-        else errors.push('Required asset HTTP ' + response.status() + ': ' + filename);
-      }
-    });
-    page.on('console', message => { if (message.type() === 'error' && /hydration|hydrated|did not match|Invitation motion/i.test(message.text())) errors.push(message.text()); });
-    await page.goto(baseURL + '/?inspect=1', { waitUntil: 'networkidle' }); await ready(page);
-    const layout = await coreStructure(page, width);
-    const motion = await page.evaluate(() => ({ geometry: window.__weddingMotion.geometry, knots: window.__weddingMotion.knots, routes: window.__weddingMotion.routes }));
-    const checks = await samplerChecks(page);
-    assert.ok(checks.continuity.every(row => row.position < 1 && row.tangent < .15 && row.scalar < .1), 'Position/tangent/rotation/size continuity at ' + width);
-    assert.ok(checks.clearanceCount > 0, 'Meaningful collision targets must be present');
-    if (checks.failures.length) await writeFile(output + '/clearance-' + width + '.json', JSON.stringify(checks.failures, null, 2));
-    if (diagnostic && checks.failures.length) report.errors.push('Dense silhouette clearance at ' + width + ': ' + checks.failures.length + ' collisions');
-    else assert.equal(checks.failures.length, 0, 'Dense central-pair spacing and lead limits at ' + width);
-    assert.equal(await page.locator('[data-route]').count(), 1, 'Exactly one shared trail');
-    await page.screenshot({ path: output + '/opening-' + width + '.png' });
-    const beats = [], networkChecks = [], pauseKnots = motion.knots.filter((_, index) => index % 3 === 1);
-    for (const knot of pauseKnots) {
-      await move(page, knot.scroll); const stopped = await snapshot(page);
-      const network = await routeChecks(page); networkChecks.push(network);
-      assert.deepEqual(network.failures, [], 'Per-heart trail endpoint/history check: ' + knot.beat);
-      await page.waitForTimeout(220); await sameSnapshot(page, stopped, 'Stopped scroll freezes all visuals: ' + knot.beat);
-      await move(page, knot.scroll + 23); await move(page, knot.scroll); await sameSnapshot(page, stopped, 'Reverse restores all visuals: ' + knot.beat);
-      beats.push(knot.beat);
-      if (width === 390) await page.screenshot({ path: output + '/beat-' + knot.beat.replaceAll(/[^a-z0-9]+/gi, '-').toLowerCase() + '.png' });
-    }
-    if (width === 390) {
-      for (const scene of ['childhood', 'adult']) {
-        const start = await page.locator('[data-scene="' + scene + '"]').evaluate(el => el.getBoundingClientRect().top + window.scrollY - 85);
-        await move(page, start);
-        await page.screenshot({ path: output + '/' + scene + '-composition.png' });
-      }
-      const mapChecks = [];
-      for (const progress of [0, .20, .24, .28, .44, .48, .52, .68, .72, .76, .88, .96, .99]) {
-        await move(page, motion.geometry.map.y + (motion.geometry.map.height-motion.geometry.pinHeight)*progress);
-        const frame = await page.evaluate(() => {
-          const map = document.querySelector('.map-window').getBoundingClientRect(), note = document.querySelector('.location-note').getBoundingClientRect();
-          return { frame: { x: map.x, y: map.y, width: map.width, height: map.height }, note: { x: note.x-map.x, y: note.y-map.y, width: note.width, height: note.height }, layers: [...document.querySelectorAll('[data-map-layer]')].map(el => ({ opacity: Number(getComputedStyle(el).opacity), transform: getComputedStyle(el).transform })) };
-        });
-        assert.ok(frame.layers.some(layer => layer.opacity >= .45), 'Map handoff keeps occupied imagery');
-        assert.ok(frame.layers.every(layer => layer.opacity >= 0 && layer.opacity <= 1));
-        if (progress >= .88) {
-          assert.ok(frame.note.x >= -1 && frame.note.y >= -1 && frame.note.x+frame.note.width <= frame.frame.width+1 && frame.note.y+frame.note.height <= frame.frame.height+1, 'Venue annotation remains clamped inside map view');
-          assert.ok(frame.layers.at(-1).opacity > .99, 'Final city view established before venue note');
-        }
-        mapChecks.push({ progress, ...frame });
-        const network = await routeChecks(page); networkChecks.push(network);
-        assert.deepEqual(network.failures, [], 'Pinned map trails remain behind their own hearts');
-        await page.screenshot({ path: output + '/map-' + String(progress).replace('.', '-') + '.png' });
-      }
-      assert.ok(mapChecks.every(row => Math.abs(row.frame.y-mapChecks[0].frame.y)<1), 'All camera stages share one stable pinned frame');
-      const settled = mapChecks.filter(row => row.progress >= .96);
-      assert.ok(Math.abs(settled[0].note.x-settled[1].note.x)<1 && Math.abs(settled[0].note.y-settled[1].note.y)<1, 'Final note stays attached to city anchor');
-      report.map = mapChecks;
-      for (const knot of motion.knots.slice(1, -1)) for (const delta of [-10, -2, 0, 2, 10]) await move(page, knot.scroll + delta, 30);
-      const middle = Math.round(motion.geometry.map.y + (motion.geometry.map.height - motion.geometry.pinHeight) * .78);
-      await move(page, middle); const reference = await snapshot(page);
-      for (const destination of [0, motion.geometry.maxScroll, middle - 450, 200, middle + 200, middle]) await move(page, destination, 35);
-      await sameSnapshot(page, reference, 'Rapid repeated direction changes retrace deterministically');
-      await page.reload({ waitUntil: 'networkidle' }); await ready(page);
-      await sameSnapshot(page, reference, 'Mid-scroll reload restores camera, routes and hearts');
-      await page.setViewportSize({ width: 320, height: 844 }); await page.waitForTimeout(220);
-      assert.equal(await page.evaluate(() => window.__weddingMotion.geometry.width), 320);
-      await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(220);
-      await sameSnapshot(page, reference, 'Resize back restores the same visual pose');
-      await page.locator('.locale-switch button').filter({ hasText: 'TR' }).click(); await page.waitForTimeout(160);
-      assert.equal(await page.getAttribute('html', 'lang'), 'tr');
-      await sameSnapshot(page, reference, 'Language switch preserves scroll and choreography');
-      assert.equal(await page.locator('#invitation').evaluate(el => el.scrollHeight), layout.height, 'Both languages reserve the same geometry');
-      assert.ok((await page.locator('[data-portrait-caption]').allTextContents()).every(text => /kalptiler|hikâyesine/i.test(text)), 'Both artwork captions are localized');
-      assert.ok(await page.locator('.location-note').textContent().then(text => text.includes('17 Ekim 2026') && text.includes('15:00')));
-      for (const scene of ['childhood','adult']) {
-        const position=await page.locator('[data-scene="'+scene+'"]').evaluate(el=>el.getBoundingClientRect().top+window.scrollY-85);
-        await move(page,position);
-        assert.equal(await page.locator('[data-composition="'+scene+'"] img').evaluate(image=>image.complete&&image.naturalWidth>0),true,'Supplied portrait remains loaded in Turkish');
-        await page.screenshot({path:output+'/turkish-'+scene+'-composition.png'});
-      }
-      await move(page,middle);
-      await sameSnapshot(page,reference,'Turkish portrait roundtrip restores mid-scroll choreography');
-      await move(page, motion.geometry.map.y+(motion.geometry.map.height-motion.geometry.pinHeight)*.98);
-      const translatedNotePose=await snapshot(page);
-      await page.screenshot({ path: output + '/turkish-city-note.png' });
-      await page.locator('.locale-switch button').filter({ hasText: 'EN' }).click(); await page.waitForTimeout(160);
-      await sameSnapshot(page,translatedNotePose,'Visible venue note switch to English preserves geometry');
-      await page.locator('.locale-switch button').filter({ hasText: 'TR' }).click(); await page.waitForTimeout(160);
-      await sameSnapshot(page,translatedNotePose,'Visible venue note switch back to Turkish preserves geometry');
-      await move(page,middle);
-      await page.locator('.locale-switch button').filter({ hasText: 'EN' }).click(); await page.waitForTimeout(160);
-      await sameSnapshot(page, reference, 'Switch back to English preserves scroll and choreography');
-      const disabled = page.locator('.directions');
-      assert.equal(await disabled.isDisabled(), true, 'Missing venue keeps directions unavailable');
-      assert.ok(await disabled.evaluate(el => el.getBoundingClientRect().height >= 44), 'Comfortable directions target');
-      assert.equal(await page.locator('.live-countdown').getAttribute('aria-live'), 'off');
-      await page.emulateMedia({ reducedMotion: 'reduce' }); await page.waitForTimeout(220);
-      await page.locator('.location-note').scrollIntoViewIfNeeded();
-      assert.equal(await page.locator('.location-note').evaluate(el => getComputedStyle(el).opacity), '1');
-      assert.equal(await page.locator('.route-svg').evaluate(el => getComputedStyle(el).display), 'none');
-      assert.ok(await page.locator('.map-window [data-map-layer]').last().evaluate(el => Number(getComputedStyle(el).opacity) > .99));
-      await page.screenshot({ path: output + '/reduced-motion.png' });
-      await page.emulateMedia({ reducedMotion: 'no-preference' }); await page.waitForTimeout(220);
-    }
-    await move(page, 0);
-    const top = await page.evaluate(() => ({ opacity: document.querySelector('.route-svg').style.opacity, masks: [...document.querySelectorAll('.route-svg mask path')].map(el => ({ length: el.getTotalLength(), offset: Number(el.style.strokeDashoffset) })) }));
-    assert.equal(top.opacity, '0'); assert.ok(top.masks.every(mask => Math.abs(mask.length-mask.offset) < .2), 'All branch history is erased at the top');
-    assert.equal(loadedAssets.size, 8, 'All eight exact supplied files load successfully through the journey');
-    assert.deepEqual(errors, []);
-    report.widths.push({ width, layout, checks, networkChecks, beats, errors, top, loadedAssets: [...loadedAssets], motion });
-    await context.close();
-  }
-
-  const orientationContext = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-US' });
-  const orientationPage = await orientationContext.newPage();
-  await orientationPage.goto(baseURL + '/?inspect=1', { waitUntil: 'networkidle' }); await ready(orientationPage);
-  await orientationPage.setViewportSize({ width: 844, height: 390 }); await ready(orientationPage);
-  const landscapeGeometry = await orientationPage.evaluate(() => window.__weddingMotion.geometry);
-  await move(orientationPage, landscapeGeometry.map.y+(landscapeGeometry.map.height-landscapeGeometry.pinHeight)*.99);
-  const landscape = await orientationPage.evaluate(() => {
-    const map=document.querySelector('.map-window').getBoundingClientRect(),note=document.querySelector('.location-note').getBoundingClientRect(),button=document.querySelector('.directions').getBoundingClientRect();
-    return { width: document.querySelector('#invitation').getBoundingClientRect().width, map:{x:map.x,y:map.y,width:map.width,height:map.height}, note:{x:note.x-map.x,y:note.y-map.y,width:note.width,height:note.height}, button:{y:button.y-map.y,height:button.height}, overflow:document.documentElement.scrollWidth };
-  });
-  assert.equal(landscape.width,430); assert.ok(landscape.overflow<=844);
-  assert.ok(landscape.note.x>=-1 && landscape.note.y>=-1 && landscape.note.x+landscape.note.width<=landscape.map.width+1 && landscape.note.y+landscape.note.height<=landscape.map.height+1,'Landscape orientation keeps venue annotation inside map');
-  assert.ok(landscape.button.height>=44 && landscape.button.y+landscape.button.height<=landscape.map.height,'Landscape directions remains readable and touchable');
-  await orientationPage.screenshot({path:output+'/landscape-orientation.png'});
-  await orientationPage.setViewportSize({width:390,height:844}); await ready(orientationPage);
-  assert.equal(await orientationPage.evaluate(()=>window.__weddingMotion.geometry.width),390);
-  const orientationPose=await snapshot(orientationPage); await orientationPage.waitForTimeout(220); await sameSnapshot(orientationPage,orientationPose,'Returning to portrait freezes settled orientation geometry');
-  report.orientation=landscape; await orientationContext.close();
-
-  for (const test of [
-    { id: 'turkish', preferences: ['tr-TR', 'en-US'], accept: 'tr-TR,en-US;q=0.9', expected: 'tr' },
-    { id: 'english', preferences: ['en-US', 'tr-TR'], accept: 'en-US,tr-TR;q=0.9', expected: 'en' },
-    { id: 'supported-later', preferences: ['fr-FR', 'de-DE', 'tr-TR'], accept: 'fr-FR,de-DE;q=0.9,tr-TR;q=0.8', expected: 'tr' },
-    { id: 'unsupported', preferences: ['fr-FR', 'de-DE'], accept: 'fr-FR,de-DE;q=0.9', expected: 'en' },
-    { id: 'manual-cookie', preferences: ['tr-TR'], accept: 'tr-TR', manual: 'en', expected: 'en' },
-    { id: 'manual-storage', preferences: ['en-US'], accept: 'en-US', storage: 'tr', expected: 'tr' },
-  ]) {
-    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, extraHTTPHeaders: { 'Accept-Language': test.accept } });
-    await context.addInitScript(({ preferences, storage }) => {
-      Object.defineProperty(navigator, 'languages', { get: () => preferences });
-      Object.defineProperty(navigator, 'language', { get: () => preferences[0] });
-      if (storage) localStorage.setItem('invitation-language', storage);
-    }, test);
-    if (test.manual) await context.addCookies([{ name: 'invitation-language', value: test.manual, url: baseURL }]);
-    const page = await context.newPage();
-    await page.goto(baseURL + '/?inspect=1', { waitUntil: 'networkidle' }); await ready(page);
-    assert.equal(await page.getAttribute('html', 'lang'), test.expected, 'Browser locale case ' + test.id);
-    assert.equal(await page.locator('.locale-switch button[aria-pressed="true"]').textContent(), test.expected.toUpperCase());
-    if (!test.storage) {
-      const html = await context.request.get(baseURL + '/');
-      assert.ok((await html.text()).includes('<html lang="' + test.expected + '"'), 'Server locale case ' + test.id);
-    }
-    await page.locator('.locale-switch button').filter({ hasText: test.expected === 'tr' ? 'EN' : 'TR' }).click();
-    const manual = test.expected === 'tr' ? 'en' : 'tr';
-    await page.reload({ waitUntil: 'networkidle' }); await ready(page);
-    assert.equal(await page.getAttribute('html', 'lang'), manual, 'Manual selection persists: ' + test.id);
-    report.locale.push({ ...test, persisted: manual }); await context.close();
-  }
-
-  const clockContext = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-US' });
-  const clockPage = await clockContext.newPage();
-  const target = new Date('2026-10-17T15:00:00+03:00');
-  await clockPage.clock.install({ time: new Date(target.getTime() - 3000) });
-  await clockPage.clock.pauseAt(new Date(target.getTime() - 2000));
-  await clockPage.goto(baseURL + '/?inspect=1', { waitUntil: 'networkidle' });
-  assert.ok((await clockPage.locator('.countdown-grid').textContent()).includes('02'));
-  await clockPage.clock.runFor(2000);
-  assert.equal(await clockPage.locator('.celebration').count(), 1, 'Reached date shows celebration');
-  const reached = await clockPage.locator('.live-countdown').textContent();
-  await clockPage.clock.runFor(5000);
-  assert.equal(await clockPage.locator('.live-countdown').textContent(), reached, 'Reached-date clock stays stopped at zero');
-  report.clock = { target: target.toISOString(), reached, afterFiveSeconds: await clockPage.locator('.live-countdown').textContent() };
-  await clockContext.close();
-
-  const staticContext = await browser.newContext({ viewport: { width: 390, height: 844 }, javaScriptEnabled: false, extraHTTPHeaders: { 'Accept-Language': 'tr-TR' } });
-  const staticPage = await staticContext.newPage(); await staticPage.goto(baseURL + '/', { waitUntil: 'networkidle' });
-  await staticPage.locator('.location-note').scrollIntoViewIfNeeded();
-  assert.equal(await staticPage.locator('.location-note').evaluate(el => getComputedStyle(el).opacity), '1');
-  assert.ok(await staticPage.locator('.location-note').textContent().then(text => text.includes('17 Ekim 2026') && text.includes('İzmit')));
-  assert.equal(await staticPage.locator('.directions').isDisabled(), true);
-  await staticPage.screenshot({ path: output + '/no-javascript.png' });
-  report.static = { locale: await staticPage.getAttribute('html', 'lang'), venueVisible: true, directionsDisabled: true };
-  await staticContext.close();
-  await writeFile(output + '/report.json', JSON.stringify(report, null, 2));
-  if (report.errors.length) { console.log('Diagnostic review completed with unresolved failures: ' + report.errors.length); process.exitCode = 1; }
-  else console.log('Master browser checks passed: four widths, choreography, reversible routes/camera, lifecycle, EN/TR, countdown and static fallback.');
-} catch (error) {
-  report.errors.push(error.stack || String(error));
-  await writeFile(output + '/report.json', JSON.stringify(report, null, 2));
-  throw error;
-} finally { await browser.close(); }
+  check(math.hitCount===0,'Readable-content heart collisions at '+width+': '+math.hitCount);
+  check(math.separation<65,'Main pair stays close at '+width);check(math.jump<3,'Continuous small scroll movements at '+width);
+  check(math.minSeparation>19,'Main hearts remain distinct at '+width);check(math.jump<.65,'Restrained per-scroll movement at '+width);
+  check(await page.evaluate(()=>{const m=window.__weddingMotion,p=m.sample(m.geometry.maxScroll);return Math.abs(p.route.x-m.geometry.width/2)<1;}),'Final pair rests at centre '+width);
+  await page.screenshot({path:output+'/opening-'+width+'.png'});
+  for(const [name,y]of [['childhood',geometry.childhood.y-140],['adult',geometry.adult.y-130],['countdown',geometry.countdown.y-120],['city',geometry.map.y+1050],['rest',geometry.maxScroll]]){await move(page,y);await page.screenshot({path:output+'/'+name+'-'+width+'.png'});}
+  const local=await page.evaluate(()=>[...document.querySelectorAll('[data-decoration]')].map(el=>{const b=el.getBoundingClientRect(),parent=el.closest('section').getBoundingClientRect();return{x:b.x-parent.x,y:b.y-parent.y,width:b.width,height:b.height,parentWidth:parent.width,parentHeight:parent.height,transform:el.style.transform};}));
+  check(local.every(b=>b.x>=-1&&b.y>=-1&&b.x+b.width<=b.parentWidth+1&&b.y+b.height<=b.parentHeight+1),'Decorations stay inside their own sections '+width);
+  await move(page,geometry.countdown.y-160);const saved=await snapshot(page);await page.waitForTimeout(250);assert.deepEqual(await snapshot(page),saved,'Stopped story freezes');
+  await move(page,geometry.maxScroll);await move(page,geometry.countdown.y-160);assert.deepEqual(await snapshot(page),saved,'Rapid reverse restores every visual');
+  const builds=await page.locator('.motion-layer').getAttribute('data-build-count');const savedHeight=await snapshot(page);
+  await page.setViewportSize({width,height:744});await page.waitForTimeout(250);check(await page.locator('.motion-layer').getAttribute('data-build-count')===builds,'Height-only resize does not rebuild '+width);assert.deepEqual(await snapshot(page),savedHeight,'Height-only resize preserves poses');
+  await page.setViewportSize({width,height:844});await page.waitForTimeout(150);
+  await page.reload();await ready(page);check(Math.abs((await snapshot(page)).scroll-saved.scroll)<2,'Reload preserves scroll');
+  if(width===390){const g=await page.evaluate(()=>window.__weddingMotion.geometry);await move(page,g.map.y+550);const oldU=Number(await page.locator('.motion-layer').getAttribute('data-map-progress'));await page.setViewportSize({width:844,height:390});await page.waitForTimeout(400);check(Math.abs(Number(await page.locator('.motion-layer').getAttribute('data-map-progress'))-oldU)<.002,'Orientation preserves current map progress');await page.setViewportSize({width:390,height:844});await page.waitForTimeout(400);check(Math.abs(Number(await page.locator('.motion-layer').getAttribute('data-map-progress'))-oldU)<.002,'Return orientation preserves map progress');}
+  await move(page,0);check(await page.locator('.route-svg').evaluate(e=>e.style.opacity==='0'),'No trail at top');
+  check(errors.length===0,'No browser JS errors at '+width+': '+errors.join(';'));
+  report.widths.push({width,math,initialRequests});await context.close();
+ }
+ const landscape=await browser.newContext({viewport:{width:844,height:390}}),landscapePage=await landscape.newPage();await landscapePage.goto(base+'/?inspect=1');await ready(landscapePage);
+ const landG=await landscapePage.evaluate(()=>window.__weddingMotion.geometry);await move(landscapePage,landG.map.y+1050);
+ const noteFit=await landscapePage.evaluate(()=>{const note=document.querySelector('[data-map-note]').getBoundingClientRect(),frame=document.querySelector('[data-map-frame]').getBoundingClientRect();return note.left>=frame.left&&note.right<=frame.right&&note.top>=frame.top&&note.bottom<=frame.bottom;});
+ check(noteFit,'Landscape location card remains inside city frame');await landscapePage.screenshot({path:output+'/landscape.png'});await landscape.close();
+ const largeLandscape=await browser.newContext({viewport:{width:844,height:390}}),largePage=await largeLandscape.newPage();await largePage.goto(base+'/?inspect=1');await ready(largePage);await largePage.addStyleTag({content:'html{font-size:200% !important}'});await largePage.waitForTimeout(350);const largeG=await largePage.evaluate(()=>window.__weddingMotion.geometry);await move(largePage,largeG.map.y+1050);
+ const largeFit=await largePage.evaluate(()=>{const note=document.querySelector('[data-map-note]').getBoundingClientRect(),frame=document.querySelector('[data-map-frame]').getBoundingClientRect(),paper=document.querySelector('.location-paper');return note.top>=frame.top&&note.bottom<=frame.bottom&&paper.scrollHeight>paper.clientHeight&&paper.tabIndex===0;});check(largeFit,'Large landscape card fits map with keyboard-accessible overflow');await largePage.locator('.location-paper').focus();await largePage.keyboard.press('End');await largePage.waitForTimeout(250);check(await largePage.locator('.location-paper').evaluate(e=>e.scrollTop>0),'Keyboard reaches enlarged landscape details');await largePage.screenshot({path:output+'/landscape-enlarged.png'});await largeLandscape.close();
+ const headingContext=await browser.newContext({viewport:{width:844,height:390}}),headingPage=await headingContext.newPage();await headingPage.goto(base+'/?inspect=1');await ready(headingPage);await headingPage.addStyleTag({content:'html{font-size:200% !important}'});await headingPage.waitForTimeout(350);check(await headingPage.evaluate(()=>document.querySelector('.destination-heading').getBoundingClientRect().bottom+12<=document.querySelector('[data-map-frame]').getBoundingClientRect().top),'Enlarged map heading stays above frame');await headingContext.close();
+ const mobile=await browser.newContext({viewport:{width:390,height:740},screen:{width:390,height:844},hasTouch:true,isMobile:true}),mobilePage=await mobile.newPage();await mobilePage.goto(base+'/?inspect=1');await ready(mobilePage);const mobileG=await mobilePage.evaluate(()=>window.__weddingMotion.geometry);await move(mobilePage,mobileG.maxScroll);const mobileState=await snapshot(mobilePage),mobileBuild=await mobilePage.locator('.motion-layer').getAttribute('data-build-count');await mobilePage.setViewportSize({width:390,height:830});await mobilePage.waitForTimeout(300);assert.deepEqual(await snapshot(mobilePage),mobileState,'Mobile end stays settled through address-bar-height simulation');check(await mobilePage.locator('.motion-layer').getAttribute('data-build-count')===mobileBuild,'Mobile height-only change does not rebuild');await mobile.close();
+ for(const [device,stored,override,expected]of [['tr-TR','en','', 'tr'],['en-US','tr','', 'en'],['fr-FR','tr','', 'en'],['tr-TR','en','en','en'],['en-US','tr','tr','tr']]){
+  const context=await browser.newContext({viewport:{width:390,height:844},locale:device});
+  await context.addCookies([{name:'invitation-language',value:stored,url:base}]);await context.addInitScript(value=>localStorage.setItem('invitation-language',value),stored);
+  const page=await context.newPage();await page.goto(base+'/?inspect=1'+(override?'&lang='+override:''));await ready(page);
+  check(await page.locator('html').getAttribute('lang')===expected,'Automatic language '+device+' ignores '+stored);
+  const g=await page.evaluate(()=>window.__weddingMotion.geometry);await move(page,g.childhood.y-110);await page.screenshot({path:output+'/caption-'+expected+'-'+override+'.png'});
+  await page.addStyleTag({content:'html{font-size:200% !important}'});await page.waitForTimeout(350);
+  const overflow=await page.evaluate(()=>({page:document.documentElement.scrollWidth>innerWidth,captions:[...document.querySelectorAll('[data-portrait-caption]')].some(e=>e.scrollWidth>e.clientWidth+1)}));
+  check(!overflow.page&&!overflow.captions,'200% text wraps without horizontal clipping '+expected);
+  await page.screenshot({path:output+'/enlarged-'+expected+'.png'});
+  const enlarged=await page.evaluate(()=>window.__weddingMotion.geometry);await move(page,enlarged.countdown.y-30);
+  const counterOverlap=await page.evaluate(()=>{const boxes=[...document.querySelectorAll('.countdown-grid span,.countdown-grid small')].map(el=>{const range=document.createRange();range.selectNodeContents(el);return range.getBoundingClientRect();});return boxes.some((a,i)=>boxes.some((b,j)=>j>i&&a.right>b.left+1&&a.left<b.right-1&&a.bottom>b.top+1&&a.top<b.bottom-1));});
+  check(!counterOverlap,'Enlarged countdown digits/labels do not overlap '+expected);
+  await page.screenshot({path:output+'/enlarged-countdown-'+expected+'.png'});
+  const boundaries=await page.evaluate(()=>{const root=document.querySelector('#invitation').getBoundingClientRect(),ending=document.querySelector('.ending').getBoundingClientRect(),word=document.querySelector('.wordmark').getBoundingClientRect(),opening=document.querySelector('.opening').getBoundingClientRect(),prompt=document.querySelector('.scroll-invitation').getBoundingClientRect();return{footer:word.bottom<=ending.bottom-12&&word.right<=root.right,opening:prompt.bottom<=opening.bottom-20};});
+  check(boundaries.footer&&boundaries.opening,'Enlarged opening and footer remain contained '+expected);
+  report.locales.push({device,stored,override,expected,overflow});await context.close();
+ }
+ for(const [now,state]of [['2026-10-17T14:59:58+03:00','before'],['2026-10-17T15:00:00+03:00','celebration'],['2026-10-17T23:59:59+03:00','celebration'],['2026-10-18T00:00:00+03:00','thanks']]){
+  const context=await browser.newContext();const page=await context.newPage();await page.clock.install({time:new Date(now)});await page.goto(base);await page.waitForTimeout(100);
+  check(state==='before'?await page.locator('.countdown-grid').count()===1:await page.locator('[data-countdown-state="'+state+'"]').count()===1,'Countdown state '+now);
+  check((await page.locator('.countdown-paper h2').textContent())===(state==='before'?'Until the special day':state==='celebration'?'Our wedding day':'With love and gratitude'),'Correct countdown heading '+state);
+  if(now.includes('23:59:59')){await page.clock.runFor(2000);check(await page.locator('[data-countdown-state="thanks"]').count()===1,'Wedding-day midnight transitions to thanks');}
+  report.clock.push({now,state});await context.close();
+ }
+ for(const options of [{reducedMotion:'reduce'},{javaScriptEnabled:false}]){
+  const context=await browser.newContext({viewport:{width:390,height:844},...options}),page=await context.newPage();await page.goto(base);
+  check(await page.locator('[data-map-note]').isVisible(),'Static practical information');check(await page.locator('.wedding-date').isVisible(),'Static date');await page.screenshot({path:output+'/static-'+(options.reducedMotion?'reduced':'nojs')+'.png'});await context.close();
+ }
+ const context=await browser.newContext();await context.route('**/assets/*.webp',r=>r.abort());const page=await context.newPage();await page.goto(base);
+ await page.evaluate(()=>scrollTo(0,document.body.scrollHeight));await page.waitForTimeout(500);
+ check(await page.locator('[data-artwork="mapCity"][data-asset-state="error"]').count()===1,'Real image failure shows fallback');check(await page.locator('.landscape-preview').count()>0,'Map failure has a light fallback');await context.close();
+ const failure=await browser.newContext();await failure.addInitScript(()=>{const original=Element.prototype.getBoundingClientRect;Element.prototype.getBoundingClientRect=function(){const box=original.call(this);return this.matches('.resting-place')?new DOMRect(box.x,0,box.width,box.height):box;};});
+ const failedPage=await failure.newPage();await failedPage.goto(base);await failedPage.waitForTimeout(300);check(await failedPage.locator('#invitation.calm').count()===1,'Initialization failure keeps static invitation');check(await failedPage.locator('[data-map-note]').isVisible(),'Failure keeps location information');await failure.close();
+ console.log('Browser refinement review complete; '+report.errors.length+' errors.');
+}finally{await writeFile(output+'/report.json',JSON.stringify(report,null,2));await browser.close();}

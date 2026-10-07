@@ -26,6 +26,7 @@ export type MapGeometry = {
   cityAnchor: Point;
 };
 const measured = new WeakMap<HTMLElement, MapGeometry>();
+const elements = new WeakMap<HTMLElement,{planes:HTMLElement[];marker:HTMLElement|null;note:HTMLElement|null}>();
 
 function annotationRect(anchor: Point, width: number, height: number, noteWidth: number, noteHeight: number) {
   return {
@@ -72,19 +73,24 @@ export function cameraAnchor(u: number, width: number, height: number): Point {
 }
 
 /** Called by the invitation's one controller after width/fonts/locale/image changes. */
-export function configureMapGeometry(root: HTMLElement): MapGeometry {
+export function configureMapGeometry(root: HTMLElement, viewportHeight=window.innerHeight): MapGeometry {
   const section = root.querySelector<HTMLElement>('[data-scene="map"]');
   const pin = section?.querySelector<HTMLElement>('.map-pin');
   const frame = section?.querySelector<HTMLElement>('[data-map-frame]');
   const note = section?.querySelector<HTMLElement>('[data-map-note]');
   if (!section || !pin || !frame || !note) throw new Error('Map stage is incomplete');
-  const pinHeight = Math.min(650, window.innerHeight);
-  const frameHeight = Math.min(480, Math.max(260, pinHeight-150));
+  const frameTop=frame.offsetTop;
+  const pinHeight = Math.max(Math.min(650, viewportHeight),frameTop+260+35);
+  const frameHeight = Math.min(480, Math.max(260, pinHeight-frameTop-35));
   section.style.setProperty('--map-pin-height', pinHeight+'px');
   section.style.setProperty('--map-frame-height', frameHeight+'px');
+  section.style.setProperty('--map-note-max-height',Math.max(110,frameHeight*(frameHeight<340?.95:.76)-60)+'px');
   section.style.setProperty('--map-scroll-distance', mapCameraConfig.scrollDistance+'px');
   // offsetLeft/Top are local to map-pin, including during a sticky restoration.
   const finalAnchor = cameraAnchor(1, frame.clientWidth, frame.clientHeight);
+  const paper=section.querySelector<HTMLElement>('.location-paper')!;
+  const scrollable=paper.scrollHeight>paper.clientHeight+1;
+  paper.classList.toggle('note-scrollable',scrollable);paper.tabIndex=scrollable?0:-1;
   const geometry = {
     frame: { x: frame.offsetLeft, y: frame.offsetTop, width: frame.clientWidth, height: frame.clientHeight },
     pinHeight, duration: mapCameraConfig.scrollDistance,
@@ -92,6 +98,7 @@ export function configureMapGeometry(root: HTMLElement): MapGeometry {
     cityAnchor: finalAnchor,
   };
   measured.set(root, geometry);
+  elements.set(root,{planes:Array.from(root.querySelectorAll<HTMLElement>('[data-map-layer]')),marker:root.querySelector<HTMLElement>('.venue-pin'),note});
   return geometry;
 }
 
@@ -100,7 +107,8 @@ export function drawMapCamera(root: HTMLElement, u: number) {
   const geometry = measured.get(root) || configureMapGeometry(root);
   const { width, height } = geometry.frame;
   const poses = sampleMapCamera(u, width, height);
-  root.querySelectorAll<HTMLElement>('[data-map-layer]').forEach((plane, index) => {
+  const cached=elements.get(root)!;
+  cached.planes.forEach((plane, index) => {
     const pose = poses[index];
     plane.style.width = pose.width+'px'; plane.style.height = pose.height+'px';
     plane.style.left = '0px'; plane.style.top = '0px';
@@ -108,8 +116,7 @@ export function drawMapCamera(root: HTMLElement, u: number) {
     plane.style.opacity = String(pose.opacity);
   });
   const anchor = cameraAnchor(u, width, height);
-  const marker = root.querySelector<HTMLElement>('.venue-pin');
-  const note = root.querySelector<HTMLElement>('[data-map-note]');
+  const {marker,note}=cached;
   const noteReveal = between(u, mapCameraConfig.noteStart, mapCameraConfig.noteEnd);
   const pinReveal = between(u, .77, .82);
   if (marker) {
@@ -120,6 +127,7 @@ export function drawMapCamera(root: HTMLElement, u: number) {
   if (note) {
     const { x, y } = annotationRect(anchor, width, height, geometry.note.width, geometry.note.height);
     note.style.left = x+'px'; note.style.top = y+'px';
+    note.style.bottom = 'auto';
     note.style.setProperty('--note-pointer-x', clamp(anchor.x-x, 18, geometry.note.width-18)+'px');
     note.style.setProperty('--note-pointer-height', Math.max(12, anchor.y-y-geometry.note.height-32)+'px');
     note.style.opacity = String(noteReveal);

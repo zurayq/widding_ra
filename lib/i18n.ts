@@ -1,6 +1,4 @@
 export type Locale = 'en' | 'tr';
-export const LOCALE_COOKIE = 'invitation-language';
-export const LOCALE_STORAGE = 'invitation-language';
 
 const en = {
   intro: 'A little story of us',
@@ -10,8 +8,9 @@ const en = {
   childhood: 'Once\nThey were just\nTwo little hearts',
   adult: 'And they grew\nInto a love story',
   countdown: 'Until the special day', countdownLabel: 'Time until the wedding',
+  celebrationHeading: 'Our wedding day',thankYouHeading: 'With love and gratitude',
   days: 'Days', hours: 'Hours', minutes: 'Minutes', seconds: 'Seconds',
-  celebration: 'Today, our next chapter begins.', datePending: 'Wedding date to be confirmed',
+  celebration: 'Today, our next chapter begins.', thankYou: 'Thank you for being part of our love story.', datePending: 'Wedding date to be confirmed',
   destination: 'A place for our next chapter', mapHeading: 'Meet us in İzmit.',
   mapSceneLabel: 'Journey toward İzmit', venuePinLabel: 'İzmit on the illustrated map',
   mapCaption: 'İzmit, Kocaeli · Türkiye', ceremony: 'The wedding',
@@ -20,7 +19,7 @@ const en = {
   directionsPending: 'Directions available when the venue is confirmed',
   ending: 'Two homes. One new beginning.', closing: 'Made with love',
   verseLabel: 'Quran verse in Arabic',
-  languageLabel: 'Invitation language', english: 'English', turkish: 'Turkish',
+  marmaraSea: 'Marmara Sea',
   algeria: 'Algeria', palestine: 'Palestine',
   assetUnavailable: 'This artwork is currently unavailable.',
   alt: {
@@ -50,8 +49,9 @@ const tr: InvitationCopy = {
   childhood: 'Bir\nzamanlar sadece\niki küçük kalptiler',
   adult: 'Ve büyüyüp\nBir aşk hikâyesine dönüştüler',
   countdown: 'Büyük güne kalan süre', countdownLabel: 'Düğüne kalan süre',
+  celebrationHeading: 'Düğün günümüz',thankYouHeading: 'Sevgi ve minnetle',
   days: 'Gün', hours: 'Saat', minutes: 'Dakika', seconds: 'Saniye',
-  celebration: 'Bugün, yeni hikâyemiz başlıyor.', datePending: 'Düğün tarihi yakında duyurulacak',
+  celebration: 'Bugün, yeni hikâyemiz başlıyor.', thankYou: 'Aşk hikâyemizin bir parçası olduğunuz için teşekkür ederiz.', datePending: 'Düğün tarihi yakında duyurulacak',
   destination: 'Yeni hikâyemizin başlayacağı yer', mapHeading: 'İzmit’te buluşalım.',
   mapSceneLabel: 'İzmit’e yolculuk', venuePinLabel: 'Resimli haritada İzmit',
   mapCaption: 'İzmit, Kocaeli · Türkiye', ceremony: 'Düğün',
@@ -60,7 +60,7 @@ const tr: InvitationCopy = {
   directionsPending: 'Mekân kesinleştiğinde yol tarifi eklenecek',
   ending: 'İki yuva. Yeni bir başlangıç.', closing: 'Sevgiyle hazırlandı',
   verseLabel: 'Arapça Kur’an ayeti',
-  languageLabel: 'Davetiyenin dili', english: 'İngilizce', turkish: 'Türkçe',
+  marmaraSea: 'Marmara Denizi',
   algeria: 'Cezayir', palestine: 'Filistin',
   assetUnavailable: 'Bu görsel şu anda kullanılamıyor.',
   alt: {
@@ -90,13 +90,10 @@ export function supportedLocale(language: string | null | undefined): Locale | n
 }
 
 export function selectLocale(preferences: readonly string[], manual?: string | null): Locale {
-  const explicit = supportedLocale(manual);
-  if (explicit) return explicit;
-  for (const preference of preferences) {
-    const match = supportedLocale(preference);
-    if (match) return match;
-  }
-  return 'en';
+  // Legacy stored selections are intentionally ignored. Primary device language
+  // governs the invitation; every non-Turkish language receives English.
+  void manual;
+  return supportedLocale(preferences[0]) === 'tr' ? 'tr' : 'en';
 }
 
 /** Accept-Language quality weights define the requested order; q=0 entries are unavailable. */

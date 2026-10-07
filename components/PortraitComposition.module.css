@@ -1,9 +1,11 @@
-.composition{position:relative;width:100%;margin:0;container-type:inline-size;isolation:isolate}
+.composition{position:relative;width:100%;margin:0;isolation:isolate}
+.imageCanvas{position:relative;width:100%}
 .original{display:block;width:100%;height:100%;object-fit:contain}
 .captionMask{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.caption{position:absolute;inset:0;pointer-events:none}
-.captionLine{position:absolute;display:flex;align-items:center;justify-content:center;white-space:nowrap;font-family:Georgia,'Times New Roman',serif;font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.035em;color:#513519;text-align:center;transform-origin:center}
-.multiline{white-space:normal;line-height:1.04;text-wrap:balance}
-.unavailable{padding:22px 18px;text-align:center;font-size:12px;color:#7b6341;border-block:1px solid #cab58a55}
+.caption{position:relative;width:76%;margin-inline:auto;text-align:center;color:#513519;pointer-events:none;padding:5px 8px 12px;background:#eee3cb;clip-path:polygon(0 3%,9% 0,22% 2%,40% 0,67% 2%,85% 0,100% 3%,99% 25%,100% 62%,99% 98%,77% 100%,55% 98%,32% 100%,1% 98%,0 61%,1% 26%);box-shadow:0 2px 3px #68462115}
+.childhood .caption{margin-top:-35%}
+.adult .caption{margin-top:-22%}
+.captionLine{display:block;font:400 1rem/1.45 var(--font-serif),Georgia,serif;text-wrap:balance;overflow-wrap:anywhere;margin:0 0 .15rem}
+.unavailable{padding:22px 18px;text-align:center;font-size:1rem;color:#6b5337;border-block:1px solid #cab58a55}
 .unavailable figcaption{margin-top:10px;font-style:italic}
 .clearance{position:absolute;display:block;pointer-events:none}

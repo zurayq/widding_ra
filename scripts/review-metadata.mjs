@@ -1,0 +1,18 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const base=process.env.INVITATION_REVIEW_URL||`http://localhost:${process.env.PORT||3000}`;
+const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||(process.platform==='win32'?'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe':undefined)});
+try{
+ const page=await browser.newPage();await page.goto(base);await page.evaluate(()=>document.fonts.ready);
+ assert(await page.evaluate(()=>{const body=getComputedStyle(document.body).fontFamily.split(',')[0],arabic=getComputedStyle(document.querySelector('.verse-text')).fontFamily.split(',')[0];return document.fonts.check('16px '+body)&&document.fonts.check('16px '+arabic)&&[...document.fonts].every(face=>face.status!=='error');}),'Self-hosted serif and Arabic fonts load');
+ const metadata=await page.evaluate(()=>Object.fromEntries([...document.querySelectorAll('meta[property],meta[name]')].map(el=>[el.getAttribute('property')||el.name,el.content])));
+ assert.equal(metadata['theme-color'],'#fbf8f0');assert.equal(metadata['twitter:card'],'summary_large_image');
+ for(const field of ['og:image','twitter:image']){assert(metadata[field]?.startsWith(base),'Share image uses actual request origin');const response=await page.request.get(metadata[field]);assert.equal(response.status(),200);}
+ for(const path of ['/favicon.ico','/icon.svg','/share-preview.jpg'])assert.equal((await page.request.get(base+path)).status(),200,path);
+ const context=await browser.newContext({javaScriptEnabled:false,locale:'tr-TR'}),staticPage=await context.newPage();await staticPage.goto(base);
+ assert.equal(await staticPage.locator('html').getAttribute('lang'),'tr');
+ assert.equal(await staticPage.locator('[data-composition] noscript svg').count(),2,'Localized source-caption masks exist without JavaScript');
+ assert((await staticPage.locator('[data-portrait-caption="childhood"]').textContent()).includes('küçük'));
+ await staticPage.locator('[data-composition="childhood"]').screenshot({path:'.verification/refinement/nojs-turkish-portrait.png'});
+ await context.close();console.log('Production metadata, real-origin share images, favicon, fonts and Turkish no-JS caption masks passed.');
+}finally{await browser.close();}

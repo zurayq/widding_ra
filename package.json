@@ -2,11 +2,16 @@
     "name": "widding-ly",
     "version": "0.1.0",
     "private": true,
+    "type": "module",
     "scripts": {
-        "dev": "node node_modules/next/dist/bin/next dev --hostname 0.0.0.0",
+        "dev": "node node_modules/next/dist/bin/next dev --hostname 127.0.0.1",
+        "dev:network": "node node_modules/next/dist/bin/next dev --hostname 0.0.0.0",
         "build": "node node_modules/next/dist/bin/next build",
         "start": "node node_modules/next/dist/bin/next start",
-        "typecheck": "node node_modules/typescript/bin/tsc --noEmit"
+        "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
+        "check": "node scripts/check.mjs",
+        "check:browser": "node scripts/review-master.mjs",
+        "assets:optimize": "node scripts/optimize-assets.mjs"
     },
     "dependencies": {
         "gsap": "^3.15.0",
@@ -19,6 +24,7 @@
         "@types/react": "^19.3.0",
         "@types/react-dom": "^19.3.0",
         "playwright": "^1.63.0",
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "sharp": "^0.35.5"
     }
 }

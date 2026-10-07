@@ -20,7 +20,7 @@ const normalized = (x: number, y: number, width: number, height: number, sourceW
 const entry = (id: string, fallback: Asset['fallback'], extra: Partial<Asset> = {}): Asset => {
   const filename = extra.filename ?? id + '.png';
   return {
-    id, filename, sourcePath: 'Assets/' + filename, src: '/assets/' + encodeURIComponent(filename),
+    id, filename, sourcePath: 'Assets/' + filename, src: '/assets/' + id + '.webp',
     alt: id.replaceAll('_', ' '), decorative: true, alpha: 'transparent',
     sourceSize: { width: 1000, height: 1000 }, visibleBounds: full, fit: 'contain', fallback, ...extra,
   };
