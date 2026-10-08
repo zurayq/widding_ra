@@ -7,6 +7,7 @@ import { Countdown } from '../components/Countdown';
 import { StoryMotion } from '../components/StoryMotion';
 import { MapStage } from '../components/MapStage';
 import { StoryDecorations } from '../components/StoryDecorations';
+import { InvitationAudio } from '../components/InvitationAudio';
 import { useLocale } from '../components/LocaleProvider';
 import { formatWeddingDate, formatWeddingTime } from '../lib/i18n';
 import { wedding } from '../lib/content';
@@ -19,6 +20,7 @@ export default function Page(){
       <div className="story-pattern story-pattern-right"><OriginalPattern country="palestine"/></div>
     </div>
     <StoryMotion/>
+    <InvitationAudio/>
     <section className="opening scene" data-scene="opening" aria-label={copy.invitationTitle}>
       <div className="edge-pattern edge-left" aria-hidden="true"><OriginalPattern country="algeria"/></div>
       <div className="edge-pattern edge-right" aria-hidden="true"><OriginalPattern country="palestine"/></div>

@@ -1,0 +1,38 @@
+'use client';
+import {useEffect,useRef,useState} from 'react';
+import {useLocale} from './LocaleProvider';
+import styles from './InvitationAudio.module.css';
+type Status='idle'|'playing'|'paused'|'blocked'|'ended'|'error';
+const labels={
+ en:{play:'Play invitation audio',pause:'Pause invitation audio',blocked:'Tap for sound',error:'Retry audio',short:'Sound'},
+ tr:{play:'Davetiyenin sesini aç',pause:'Davetiyenin sesini duraklat',blocked:'Ses için dokun',error:'Sesi yeniden dene',short:'Ses'},
+ ar:{play:'تشغيل صوت الدعوة',pause:'إيقاف صوت الدعوة مؤقتًا',blocked:'اضغط للصوت',error:'إعادة محاولة تشغيل الصوت',short:'الصوت'},
+};
+export function InvitationAudio(){
+ const {locale}=useLocale(),copy=labels[locale];
+ const audio=useRef<HTMLAudioElement>(null),attempted=useRef(false),mounted=useRef(false);
+ const [status,setStatus]=useState<Status>('idle');
+ const play=async()=>{
+  const element=audio.current;if(!element)return;
+  attempted.current=true;
+  try{await element.play();}catch(error){if(mounted.current)setStatus(error instanceof DOMException&&error.name==='NotAllowedError'?'blocked':'error');}
+ };
+ useEffect(()=>{
+  mounted.current=true;
+  const onScroll=()=>{if(!attempted.current&&window.scrollY>24)void play();};
+  const onVisibility=()=>{if(document.hidden)audio.current?.pause();};
+  window.addEventListener('scroll',onScroll,{passive:true});document.addEventListener('visibilitychange',onVisibility);
+  const element=audio.current;
+  return()=>{mounted.current=false;window.removeEventListener('scroll',onScroll);document.removeEventListener('visibilitychange',onVisibility);element?.pause();};
+ },[]);
+ const playing=status==='playing',label=playing?copy.pause:status==='blocked'?copy.blocked:status==='error'?copy.error:copy.play;
+ return <div className={styles.control} data-invitation-audio data-audio-state={status}>
+  <noscript><style>{'[data-invitation-audio]{display:none!important}'}</style></noscript>
+  <audio ref={audio} src="/assets/wedding-ar101.mp3" preload="none" onPlaying={()=>setStatus('playing')} onPause={()=>{if(mounted.current)setStatus(current=>current==='playing'?'paused':current);}} onEnded={()=>setStatus('ended')} onError={()=>setStatus('error')}/>
+  <button type="button" className={styles.button} aria-label={label} title={label} aria-pressed={playing} onClick={()=>{attempted.current=true;if(playing)audio.current?.pause();else void play();}}>
+   <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 13h5l7-6v18l-7-6H5z"/>{playing?<><path d="M21 11q5 5 0 10M24 7q9 9 0 18"/></>:<path d="m22 13 6 6m0-6-6 6"/>}</svg>
+  </button>
+  <span className={styles.caption} dir={locale==='ar'?'rtl':'ltr'}>{copy.short}</span>
+  <span className={styles.status} role="status">{status==='blocked'?copy.blocked:status==='error'?copy.error:''}</span>
+ </div>;
+}
