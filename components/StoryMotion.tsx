@@ -50,7 +50,7 @@ export function StoryMotion(){
    if(!Number.isFinite(g.rest.y)||g.rest.y<map.y+map.height)throw Error('Invalid ending geometry');
    const clearance:Box[]=Array.from(root.querySelectorAll('[data-clearance]')).map(el=>{const b=el.getBoundingClientRect();return{x:b.left-main.left,y:b.top-main.top,width:b.width,height:b.height};});
    const ink:Box[]=[];
-   for(const selector of ['.verse-text','.invitation-copy','.portrait-caption','.couple-names','.countdown-card .eyebrow','.countdown-card h2','.countdown-grid span','.countdown-grid small','.wedding-date','.celebration','.ending-line']){
+   for(const selector of ['.verse-text','.invitation-copy','.portrait-caption','.couple-names','.countdown-card .eyebrow','.countdown-card h2','.countdown-grid span','.countdown-grid small','.wedding-date','.celebration','.ending-line','.wordmark']){
     for(const el of root.querySelectorAll(selector)){
      const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);let node:Node|null;
      while((node=walker.nextNode())){if(!node.textContent?.trim())continue;const r=document.createRange();r.selectNodeContents(node);for(const b of r.getClientRects()){const item={x:b.left-main.left,y:b.top-main.top,width:b.width,height:b.height};clearance.push(item);ink.push(item);}}

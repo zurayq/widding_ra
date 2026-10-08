@@ -43,3 +43,7 @@ The four legacy map WebPs above remain source references. The live stage uses th
 ## Venue keepsake
 
 `public/assets/venue-keepsake.webp` (800×887, WebP quality 90, full alpha) is the approved paper-and-ink card artwork with lettering removed. The decorative coastal illustration, brown rose and hollow heart remain; all venue/date/time/directions text is real localized HTML. The card uses the supplied Tütünçiftlik venue link and real coordinates in `lib/content.ts`; the painted mini-map is decorative. The public image has transparent edges and a readable cream fallback.
+
+## Joined skyline footer
+
+`skyline-keepsake.webp` (1000×500, WebP quality 92, full alpha) preserves the approved cream/champagne paper-relief Algiers/Jerusalem-inspired architecture and rose. Empty paper background, all text and the two baked hearts were removed with image editing. `app/page.tsx` supplies translated live lettering and the email credit; the existing choreography reads the responsive centre resting anchor. Legacy separate landmark placeholders remain disabled.

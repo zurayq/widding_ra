@@ -8,7 +8,6 @@ import { StoryDecorations } from '../components/StoryDecorations';
 import { useLocale } from '../components/LocaleProvider';
 import { formatWeddingDate, formatWeddingTime } from '../lib/i18n';
 import { wedding } from '../lib/content';
-import {assets} from '../lib/assets';
 function Flourish(){return <div className="flourish" aria-hidden="true"><i/><span>◇</span><i/></div>;}
 export default function Page(){
   const {locale,copy}=useLocale();
@@ -49,12 +48,17 @@ export default function Page(){
       <div className="countdown-card paper-wrap" data-reveal="countdown"><div className="paper countdown-paper"><p className="eyebrow">{copy.ceremony}</p><Countdown/><Flourish/><p className="wedding-date">{formatWeddingDate(locale,wedding.dateISO,wedding.timezone)}<span>{formatWeddingTime(locale,wedding.dateISO,wedding.timezone)} · {wedding.country}</span></p></div><OliveSprig className="countdown-sprig"/></div>
     </section>
     <MapStage/>
-    <section className="ending scene" data-scene="ending" aria-label={copy.closing}>
-      <p className="eyebrow ending-line">{copy.ending}</p>
-      {assets.algerian_landmark.enabled && assets.algerian_landmark.src && <div className="landmark landmark-left"><Artwork id="algerian_landmark" alt={copy.alt.algerianLandmark}/></div>}
-      {assets.palestinian_landmark.enabled && assets.palestinian_landmark.src && <div className="landmark landmark-right"><Artwork id="palestinian_landmark" alt={copy.alt.palestinianLandmark}/></div>}
-      <StoryDecorations area="ending"/>
-      <div className="resting-place" aria-hidden="true"/><div className="closing-copy"><Flourish/><h2>{copy.closing}</h2><p>{copy.algeria} &amp; {copy.palestine}</p><span className="wordmark">widding.ly</span></div>
-    </section>
+    <footer className="ending scene" data-scene="ending" aria-label={copy.closing}>
+      <div className="skyline-scene">
+        {/* The artwork contains no lettering or hearts; the live pair finishes in its centre. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="skyline-art" src="/assets/skyline-keepsake.webp" width={1000} height={500} alt="" aria-hidden="true" loading="lazy"/>
+        <div className="skyline-overlay">
+          <div className="closing-copy"><h2 className="ending-line">{copy.closing}</h2></div>
+          <div className="resting-place" aria-hidden="true"/>
+        </div>
+      </div>
+      <a className="wordmark" href="mailto:studio@zurayq.lol">URAR Space</a>
+    </footer>
   </main>;
 }

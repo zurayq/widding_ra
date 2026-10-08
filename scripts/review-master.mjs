@@ -18,6 +18,8 @@ try{
   await page.goto(base+'/?inspect=1');await ready(page);
   check(await page.locator('.traveller').count()===2,'Exactly two main hearts');check(await page.locator('.locale-switch').count()===0,'No visible language switch');
   check(await page.locator('[data-route]').count()===1,'Exactly one shared trail');check(await page.locator('.directions').count()===1,'Configured destination enables directions');check(await page.locator('.landmark').count()===0,'Unfinished skylines hidden');
+  check(await page.locator('.wordmark').textContent()==='URAR Space','Studio credit uses the approved name');
+  check(await page.locator('.wordmark').getAttribute('href')==='mailto:studio@zurayq.lol','Studio credit opens the supplied email');
   const initialRequests=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>r.name.includes('/assets/')).map(r=>r.name));
   check(!initialRequests.some(url=>/mapCity.webp/.test(url)),'Final map is not eagerly downloaded on opening');
   for(const asset of Object.values(assets)){
@@ -42,6 +44,8 @@ try{
   for(const [name,y]of [['childhood',geometry.childhood.y-140],['adult',geometry.adult.y-130],['countdown',geometry.countdown.y-120],['city',geometry.map.y+1050],['rest',geometry.maxScroll]]){await move(page,y);await page.screenshot({path:output+'/'+name+'-'+width+'.png'});}
   const local=await page.evaluate(()=>[...document.querySelectorAll('[data-decoration]')].map(el=>{const b=el.getBoundingClientRect(),parent=el.closest('section').getBoundingClientRect();return{x:b.x-parent.x,y:b.y-parent.y,width:b.width,height:b.height,parentWidth:parent.width,parentHeight:parent.height,transform:el.style.transform};}));
   check(local.every(b=>b.x>=-1&&b.y>=-1&&b.x+b.width<=b.parentWidth+1&&b.y+b.height<=b.parentHeight+1),'Decorations stay inside their own sections '+width);
+  check(await page.locator('.skyline-art').evaluate(async image=>{await image.decode();return image.naturalWidth===1000&&image.naturalHeight===500;}),'Approved skyline decodes at '+width);
+  check(await page.evaluate(()=>{const m=window.__weddingMotion,p=m.sample(m.geometry.maxScroll),b=document.querySelector('.resting-place').getBoundingClientRect();return Math.abs(p.route.y-(b.y+scrollY))<1;}),'Pair settles into the skyline anchor '+width);
   await move(page,geometry.countdown.y-160);const saved=await snapshot(page);await page.waitForTimeout(250);assert.deepEqual(await snapshot(page),saved,'Stopped story freezes');
   await move(page,geometry.maxScroll);await move(page,geometry.countdown.y-160);assert.deepEqual(await snapshot(page),saved,'Rapid reverse restores every visual');
   const builds=await page.locator('.motion-layer').getAttribute('data-build-count');const savedHeight=await snapshot(page);
@@ -67,6 +71,7 @@ try{
   const page=await context.newPage();await page.goto(base+'/?inspect=1'+(override?'&lang='+override:''));await ready(page);
   check(await page.locator('html').getAttribute('lang')===expected,'Automatic language '+device+' ignores '+stored);
   const g=await page.evaluate(()=>window.__weddingMotion.geometry);await move(page,g.childhood.y-110);await page.screenshot({path:output+'/caption-'+expected+'-'+override+'.png'});
+  await move(page,g.maxScroll);await page.screenshot({path:output+'/footer-'+expected+'-'+override+'.png'});
   await page.addStyleTag({content:'html{font-size:200% !important}'});await page.waitForTimeout(350);
   const overflow=await page.evaluate(()=>({page:document.documentElement.scrollWidth>innerWidth,captions:[...document.querySelectorAll('[data-portrait-caption]')].some(e=>e.scrollWidth>e.clientWidth+1)}));
   check(!overflow.page&&!overflow.captions,'200% text wraps without horizontal clipping '+expected);
