@@ -1,6 +1,6 @@
 import { mapVideo } from './map-video-config';
-/** A latest-target seek queue: one decoder seek in flight, never autoplay. */
-type Controller = { seek: (progress: number) => void; static: () => void };
+/** Preload near the map, then play silently once during its two-second reveal. */
+type Controller = { seek: (progress: number) => void; play: () => void; static: () => void };
 const controllers = new WeakMap<HTMLElement, Controller>();
 const targets = new WeakMap<HTMLElement, number>();
 export function seekMapVideo(root: HTMLElement, progress: number) {
@@ -8,9 +8,10 @@ export function seekMapVideo(root: HTMLElement, progress: number) {
   controllers.get(root)?.seek(progress);
 }
 export function stopMapVideo(root: HTMLElement) { controllers.get(root)?.static(); }
+export function playMapVideo(root: HTMLElement) { controllers.get(root)?.play(); }
 
 export function attachMapVideo(root: HTMLElement, video: HTMLVideoElement, container: HTMLElement) {
-  let disposed = false, started = false, failed = false, frame = 0;
+  let disposed = false, started = false, failed = false, frame = 0, playing = false, staticMode = false;
   let target = targets.get(root) ?? 0;
   let loadTimer = 0, arrivalTimer = 0, stallTimer = 0;
   const media = matchMedia('(prefers-reduced-motion: reduce)');
@@ -24,6 +25,7 @@ export function attachMapVideo(root: HTMLElement, video: HTMLVideoElement, conta
   const fail = () => {
     if (disposed || failed || media.matches) return;
     failed = true; clearTimers(); video.pause(); container.dataset.videoState = 'error';
+    root.dispatchEvent(new Event('invitation-map-failed'));
   };
   const guardArrival = () => {
     // Allow a normal decoder seek to finish; never leave the arrival card on the
@@ -35,7 +37,7 @@ export function attachMapVideo(root: HTMLElement, video: HTMLVideoElement, conta
   };
   const update = () => {
     frame = 0;
-    if (disposed || !started || failed || media.matches) return;
+    if (disposed || !started || failed || media.matches || playing || staticMode) return;
     guardArrival();
     if (video.readyState < 1 || video.seeking) return;
     if (Math.abs(video.currentTime - expectedTime()) > 1 / (mapVideo.fps * 2)) {
@@ -44,13 +46,13 @@ export function attachMapVideo(root: HTMLElement, video: HTMLVideoElement, conta
   };
   const schedule = () => { if (!frame && !disposed && !failed) frame = requestAnimationFrame(update); };
   const start = () => {
-    if (started || disposed || failed || media.matches) return;
+    if (started || disposed || failed || media.matches || staticMode) return;
     started = true; container.dataset.videoState = 'loading';
     loadTimer = window.setTimeout(() => { if (video.readyState < 2) fail(); }, 10000);
     video.src = mapVideo.src; video.preload = 'auto'; video.load(); guardArrival();
   };
   const settled = () => {
-    if (disposed || failed || media.matches) return;
+    if (disposed || failed || media.matches || staticMode) return;
     if (video.readyState >= 2) { clearTimeout(loadTimer); loadTimer = 0; }
     if (isCurrent()) {
       clearTimeout(stallTimer); stallTimer = 0; container.dataset.videoState = 'ready';
@@ -63,8 +65,20 @@ export function attachMapVideo(root: HTMLElement, video: HTMLVideoElement, conta
     }
   };
   const controller: Controller = {
-    seek(progress) { target = Math.max(0, Math.min(1, progress)); guardArrival(); schedule(); },
-    static() { clearTimers(); video.pause(); container.dataset.videoState = 'static'; },
+    seek(progress) {
+      target = Math.max(0, Math.min(1, progress));
+      if (playing && target < 1) return;
+      if (playing) { playing = false; video.pause(); }
+      guardArrival(); schedule();
+    },
+    play() {
+      if (disposed || media.matches) return;
+      if (failed || video.readyState < 2 || !Number.isFinite(video.duration)) { fail(); return; }
+      staticMode = false; playing = true; clearTimers(); container.dataset.videoState = 'ready';
+      video.playbackRate = video.duration / (2 * mapVideo.arrival);
+      void video.play().catch(fail);
+    },
+    static() { staticMode = true; playing = false; clearTimers(); video.pause(); container.dataset.videoState = 'static'; },
   };
   controllers.set(root, controller);
   video.addEventListener('loadedmetadata', schedule);
@@ -73,7 +87,7 @@ export function attachMapVideo(root: HTMLElement, video: HTMLVideoElement, conta
   video.addEventListener('error', fail);
   video.addEventListener('stalled', stalled); video.addEventListener('waiting', stalled);
   const change = () => {
-    if (media.matches) controller.static();
+    if (media.matches || staticMode) controller.static();
     else if (!failed) {
       container.dataset.videoState = 'loading';
       if (!started) start(); else if (video.readyState < 2) loadTimer = window.setTimeout(fail, 10000);

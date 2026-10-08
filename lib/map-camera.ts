@@ -2,7 +2,7 @@ import { seekMapVideo, stopMapVideo } from './map-video';
 import { mapVideo } from './map-video-config';
 type Point = { x: number; y: number };
 export const mapCameraConfig = {
-  scrollDistance: 1100, arrival: mapVideo.arrival,
+  scrollDistance: 180, arrival: mapVideo.arrival,
   noteStart: .82, noteEnd: .95, destinationY: .85,
 };
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));

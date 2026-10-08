@@ -31,7 +31,7 @@ try{
   const geometry=await page.evaluate(()=>window.__weddingMotion.geometry);
   const math=await page.evaluate(()=>{
    const m=window.__weddingMotion,hits=[];let separation=0,jump=0,minSeparation=Infinity;
-   for(let s=240;s<m.geometry.maxScroll;s+=3){const p=m.sample(s),next=m.sample(s+.1);const distance=Math.hypot(p.a.x-p.b.x,p.a.y-p.b.y);separation=Math.max(separation,distance);minSeparation=Math.min(minSeparation,distance);jump=Math.max(jump,Math.hypot(next.a.x-p.a.x,next.a.y-p.a.y));
+   for(let s=240;s<m.geometry.maxScroll;s+=3){const p=m.sample(s),next=m.sample(s+.1);const distance=Math.hypot(p.a.x-p.b.x,p.a.y-p.b.y);separation=Math.max(separation,distance);minSeparation=Math.min(minSeparation,distance);if(s<m.geometry.map.y)jump=Math.max(jump,Math.hypot(next.a.x-p.a.x,next.a.y-p.a.y));
     for(const [i,h]of [p.a,p.b].entries())for(const [j,b]of m.ink.entries())if(h.x+h.width/2>b.x+1&&h.x-h.width/2<b.x+b.width-1&&h.y+h.height/2>b.y+1&&h.y-h.height/2<b.y+b.height-1)hits.push({s,heart:i,box:j,h,b});
    }return{hits:hits.slice(0,20),hitCount:hits.length,separation,minSeparation,jump};
   });

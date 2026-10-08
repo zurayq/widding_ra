@@ -1,53 +1,52 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
-import {mapVideo} from '../lib/map-video-config.ts';
 const base=process.env.INVITATION_REVIEW_URL||`http://localhost:${process.env.PORT||3000}`;
-const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||(process.platform==='win32'?'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe':undefined)});
+const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE_PATH});
 await mkdir('.verification/video',{recursive:true});
-async function seek(page,progress){
-  await page.evaluate(u=>{const g=window.__weddingMotion.geometry;scrollTo(0,g.map.y+u*(g.map.height-g.pinHeight));},progress);
-  await page.waitForFunction(u=>{const v=document.querySelector('[data-map-video] video');return v.readyState>=2&&!v.seeking&&Math.abs(v.currentTime-Math.min(v.duration-1/30,Math.min(1,u/.82)*v.duration))<.04;},progress,{timeout:30000});
-}
+async function ready(page){await page.goto(base+'/?inspect=1');await page.waitForFunction(()=>window.__weddingMotion?.geometry);await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(200);}
+async function approach(page){await page.evaluate(()=>scrollTo(0,window.__weddingMotion.geometry.map.y-500));}
+async function enter(page){await page.evaluate(()=>scrollTo(0,window.__weddingMotion.geometry.map.y-100));}
 try{
  for(const width of [320,390,1440]){
-  const context=await browser.newContext({viewport:{width,height:844}}),page=await context.newPage();
-  const errors=[];page.on('pageerror',error=>errors.push(error.message));
-  await page.goto(base+'/?inspect=1');await page.waitForFunction(()=>window.__weddingMotion?.geometry);
-  assert.equal(await page.locator('[data-map-video] video').getAttribute('src'),null,'Do not download video at the opening');
-  for(const u of [.05,.3,.6,.9,1,.7,.25,.9]){
-    await seek(page,u);
-    assert.equal(await page.locator('[data-map-video]').getAttribute('data-video-state'),'ready');
-    assert(await page.locator('video').evaluate((v,width)=>v.videoWidth===width && Math.abs(v.duration-6.4)<.05,mapVideo.width),'Lighter 720p clip decodes');
-    assert(await page.locator('video').evaluate(v=>v.paused&&!v.autoplay&&v.muted&&v.playsInline),'Scroll-only, silent inline video');
-  }
-  const time=await page.locator('video').evaluate(v=>v.currentTime);
-  await page.waitForTimeout(300);assert.equal(await page.locator('video').evaluate(v=>v.currentTime),time,'Pause holds exact frame');
-  await page.evaluate(()=>{const g=window.__weddingMotion.geometry;for(const u of [.2,.9,.1,.8])scrollTo(0,g.map.y+u*(g.map.height-g.pinHeight));});
-  await seek(page,.8);
-  await seek(page,1);await page.screenshot({path:'.verification/video/final-'+width+'.png'});
-  const destination=await page.locator('.directions').getAttribute('href');assert.equal(new URL(destination).searchParams.get('destination'),'40.7603888,29.7847177');
-  assert(await page.evaluate(()=>{const pin=document.querySelector('.venue-pin').getBoundingClientRect(),note=document.querySelector('[data-map-note]').getBoundingClientRect();return note.bottom<pin.top;}),'Paper sits above the destination pin');
+  const context=await browser.newContext({viewport:{width,height:844}}),page=await context.newPage(),errors=[];
+  page.on('pageerror',error=>errors.push(error.message));await ready(page);
+  assert.equal(await page.locator('video').getAttribute('src'),null,'Opening does not download the map clip');
+  assert(await page.evaluate(()=>{const g=window.__weddingMotion.geometry;return g.map.height-g.pinHeight<=181;}),'Long scroll runway removed');
+  await approach(page);await page.waitForFunction(()=>document.querySelector('video').readyState>=2);
+  await page.evaluate(()=>{window.__mapHeartFrames=[];const track=now=>{window.__mapHeartFrames.push({now,scroll:scrollY,u:Number(document.querySelector('#invitation').dataset.mapProgress),pair:[...document.querySelectorAll('.traveller')].map(el=>{const b=el.getBoundingClientRect();return{x:b.x,y:b.y};})});if(window.__mapHeartFrames.length<160)requestAnimationFrame(track);};requestAnimationFrame(track);});
+  await enter(page);const y=await page.evaluate(()=>scrollY);
+  await page.waitForTimeout(650);
+  const mid=await page.evaluate(()=>({u:Number(document.querySelector('#invitation').dataset.mapProgress),time:document.querySelector('video').currentTime,paused:document.querySelector('video').paused}));
+  assert(mid.u>.15&&mid.u<.75,'Zoom advances without scrolling');assert(mid.time>0&&!mid.paused,'Video plays rather than seeking every frame');
+  await page.waitForFunction(()=>Number(document.querySelector('#invitation').dataset.mapProgress)===1,null,{timeout:2300});
+  assert.equal(await page.evaluate(()=>scrollY),y,'Never scroll the page automatically');
+  // Normalize to timeline progress, so a busy headless decoder skipping
+  // presentation frames does not masquerade as a discontinuous heart curve.
+  const largestStep=await page.evaluate(()=>{const frames=window.__mapHeartFrames;let largest=0;for(let j=1;j<frames.length;j++){const a=frames[j-1],b=frames[j];if(a.scroll!==b.scroll||a.u<.01||b.u<=a.u)continue;for(let i=0;i<2;i++)largest=Math.max(largest,Math.hypot(b.pair[i].x-a.pair[i].x,b.pair[i].y-a.pair[i].y)*.008335/(b.u-a.u));}return largest;});
+  assert(largestStep<12,'Restrained continuous heart curve during the two-second zoom: '+largestStep);
+  assert(await page.locator('[data-map-note]').isVisible());
+  assert(await page.evaluate(()=>{const note=document.querySelector('[data-map-note]').getBoundingClientRect(),pin=document.querySelector('.venue-pin').getBoundingClientRect();return note.bottom<pin.top;}),'Venue paper is above its pin');
+  assert.equal(new URL(await page.locator('.directions').getAttribute('href')).searchParams.get('destination'),'40.7603888,29.7847177');
+  await page.screenshot({path:'.verification/video/final-'+width+'.png'});
+  await approach(page);await enter(page);await page.waitForTimeout(200);
+  assert.equal(await page.locator('#invitation').getAttribute('data-map-progress'),'1.0000','Return visits do not replay');
+  if(width===390){await page.emulateMedia({reducedMotion:'reduce'});await page.waitForTimeout(100);await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForTimeout(100);assert.equal(await page.locator('#invitation').getAttribute('data-map-progress'),'1.0000','Motion preference changes retain the final destination');assert(await page.locator('[data-map-static]').isVisible(),'Final still remains visible after motion preference changes');}
   assert.deepEqual(errors,[]);await context.close();
  }
- const blocked=await browser.newContext({viewport:{width:390,height:844}});await blocked.route('**'+mapVideo.src,route=>route.abort());
- const page=await blocked.newPage();await page.goto(base+'/?inspect=1');await page.waitForFunction(()=>window.__weddingMotion?.geometry);
- await page.evaluate(()=>{const g=window.__weddingMotion.geometry;scrollTo(0,g.map.y+1050);});await page.waitForFunction(()=>document.querySelector('[data-map-video]').dataset.videoState==='error');
- assert(await page.locator('[data-map-static] img').evaluate((image,width)=>image.complete&&image.naturalWidth===width,mapVideo.width),'Video failure uses corrected final frame');
- assert(await page.locator('[data-map-note]').isVisible());await page.screenshot({path:'.verification/video/video-failure.png'});await blocked.close();
- // A request that stays pending emits no media error. Reaching the venue
- // must still replace the opening frame, and a late download cannot undo it.
- const delayed=await browser.newContext({viewport:{width:390,height:844}});
- let release; const hold=new Promise(resolve=>{release=resolve;});
- await delayed.route('**'+mapVideo.src,async route=>{await hold;await route.continue().catch(()=>{});});
- const delayedPage=await delayed.newPage();await delayedPage.goto(base+'/?inspect=1');await delayedPage.waitForFunction(()=>window.__weddingMotion?.geometry);
- await delayedPage.evaluate(()=>{const g=window.__weddingMotion.geometry;scrollTo(0,g.map.y+(g.map.height-g.pinHeight)*.99);});
- await delayedPage.waitForFunction(()=>document.querySelector('[data-map-video]').dataset.videoState==='error',{},{timeout:5000});
- assert(await delayedPage.locator('[data-map-static] img').evaluate(image=>image.complete&&image.naturalWidth>0));
- release();await delayedPage.waitForTimeout(500);assert.equal(await delayedPage.locator('[data-map-video]').getAttribute('data-video-state'),'error','Late video cannot replace the correct final still');
- await delayedPage.evaluate(()=>{const g=window.__weddingMotion.geometry;scrollTo(0,g.map.y+50);});await delayedPage.waitForTimeout(100);
- assert.equal(await delayedPage.locator('[data-map-video]').getAttribute('data-video-state'),'error');await delayed.close();
- const reduced=await browser.newContext({reducedMotion:'reduce'}),reducedPage=await reduced.newPage();await reducedPage.goto(base);await reducedPage.locator('[data-map-video]').scrollIntoViewIfNeeded();await reducedPage.waitForTimeout(200);
- assert.equal(await reducedPage.locator('video').getAttribute('src'),null,'Reduced motion does not load the video');assert(await reducedPage.locator('[data-map-note]').isVisible());await reduced.close();
- console.log('Video browser checks passed: loading, forward/reverse/rapid seeking, pause, coordinates, note position and reduced/error fallbacks.');
+ for(const mode of ['blocked','pending','play-rejected','fast']){
+  const context=await browser.newContext({viewport:{width:390,height:844}});
+  if(mode==='blocked')await context.route('**/assets/map-zoom-mobile.mp4',r=>r.abort());
+  if(mode==='pending')await context.route('**/assets/map-zoom-mobile.mp4',()=>{});
+  if(mode==='play-rejected')await context.addInitScript(()=>{HTMLMediaElement.prototype.play=()=>Promise.reject(new Error('Playback blocked'));});
+  const page=await context.newPage();await ready(page);await approach(page);
+  if(mode==='play-rejected')await page.waitForFunction(()=>document.querySelector('video').readyState>=2);
+  if(mode==='fast')await page.evaluate(()=>scrollTo(0,window.__weddingMotion.geometry.map.y+190));else await enter(page);
+  await page.waitForFunction(()=>Number(document.querySelector('#invitation').dataset.mapProgress)===1,null,{timeout:2500});
+  assert(await page.locator('[data-map-note]').isVisible(),mode+' keeps practical details');
+  assert(await page.locator('[data-map-static]').isVisible(),mode+' selects the final still');await context.close();
+ }
+ const context=await browser.newContext({reducedMotion:'reduce'}),page=await context.newPage();await page.goto(base);await page.locator('[data-map-video]').scrollIntoViewIfNeeded();
+ assert.equal(await page.locator('video').getAttribute('src'),null);assert(await page.locator('[data-map-note]').isVisible());await context.close();
+ console.log('Automatic map checks passed: two-second playback, short section, no page scrolling/replay, directions, pin placement, blocked/pending/rejected/fast and reduced-motion fallbacks.');
 }finally{await browser.close();}

@@ -6,6 +6,7 @@ import {Artwork} from './Artwork';
 import {buildJourney,sampleJourney,type Box,type Pose,type StoryGeometry,type Knot} from '../lib/choreography';
 import {buildRouteNetwork,routeLengthAt,type RouteSpan} from '../lib/trails';
 import {configureMapGeometry,drawMapCamera,showFinalMap} from '../lib/map-camera';
+import {playMapVideo,stopMapVideo} from '../lib/map-video';
 const clamp=(n:number)=>Math.max(0,Math.min(1,n));
 const ease=(n:number)=>{const t=clamp(n);return t*t*(3-2*t);};
 const range=(s:number,a:number,b:number)=>ease((s-a)/(b-a));
@@ -20,6 +21,15 @@ export function StoryMotion(){
   const root=document.querySelector<HTMLElement>('#invitation')!,media=matchMedia('(prefers-reduced-motion: reduce)');
   let trigger:ScrollTrigger|undefined,disposed=false,queued=0,currentWidth=0,currentHeight=0;
   let viewportHeight=innerHeight,windowWidth=innerWidth,buildCount=0;
+  let mapStartedAt:number|undefined,mapProgress=0,mapFrame=0,redraw=()=>{};
+  const finishMap=()=>{mapProgress=1;cancelAnimationFrame(mapFrame);mapFrame=0;redraw();};
+  const tickMap=(now:number)=>{
+   mapFrame=0;
+   if(disposed||media.matches||mapStartedAt===undefined)return;
+   mapProgress=Math.max(mapProgress,clamp((now-mapStartedAt)/2000));redraw();
+   if(mapProgress<1)mapFrame=requestAnimationFrame(tickMap);
+  };
+  root.addEventListener('invitation-map-failed',finishMap);
   let previousGeometry:StoryGeometry|undefined,previousKnots:Knot[]|undefined,lastNative=scrollY;
   const animated=Array.from(root.querySelectorAll<HTMLElement>('[data-reveal],.origins,.opening-heading'));
   const clear=()=>{animated.forEach(el=>{el.style.opacity='';el.style.transform='';});hearts.current.forEach(heart=>{const art=heart?.querySelector<HTMLElement>('.artwork');if(art)art.style.transform='';});};
@@ -41,7 +51,7 @@ export function StoryMotion(){
    const box=(selector:string):Box=>{const b=root.querySelector(selector)!.getBoundingClientRect();return{x:b.left-main.left,y:b.top-main.top,width:b.width,height:b.height};};
    const initial=origins(main);
    initial.forEach((p,i)=>{markers.current[i]?.setAttribute('cx',String(p.x));markers.current[i]?.setAttribute('cy',String(p.y));});
-   if(media.matches){pairLayer.current!.style.clipPath='none';pairLayer.current!.style.opacity='1';place(initial);svg.current!.style.opacity='0';showFinalMap(root);return;}
+   if(media.matches){mapProgress=1;cancelAnimationFrame(mapFrame);mapFrame=0;pairLayer.current!.style.clipPath='none';pairLayer.current!.style.opacity='1';place(initial);svg.current!.style.opacity='0';showFinalMap(root);return;}
    const endViewport=matchMedia('(pointer: coarse)').matches?Math.max(viewportHeight,screen.availHeight):viewportHeight;
    const height=root.offsetHeight,maxScroll=Math.max(1,height-endViewport),map=box('[data-scene="map"]');
    const g:StoryGeometry={width:w,height,maxScroll,viewportHeight,origins:initial,verse:box('.verse-composition'),childhood:box('.childhood-slot'),adult:box('.adult-slot'),countdown:box('.countdown-card'),map,pinHeight:mapGeometry.pinHeight,mapFrame:mapGeometry.frame,note:mapGeometry.note,cityAnchor:{x:mapGeometry.frame.x+mapGeometry.cityAnchor.x,y:mapGeometry.cityAnchor.y},rest:box('.resting-place')};
@@ -98,7 +108,20 @@ export function StoryMotion(){
    const reveal=(key:string,p:number,tilt=0)=>gsap.set(revealElements.get(key)!,{opacity:p,y:(1-p)*11,scale:.984+.016*p,rotation:tilt*(1-p)});
    const heartArtwork=hearts.current.map(heart=>heart!.querySelector<HTMLElement>('.artwork')!);
    const draw=(s:number)=>{
-    const p=sampleJourney(knots,s);place([p.a,p.b]);
+    const passed=s>=map.y+mapGeometry.duration;
+    if(passed&&mapProgress<1){mapProgress=1;cancelAnimationFrame(mapFrame);mapFrame=0;stopMapVideo(root);}
+    else if(mapStartedAt===undefined&&mapProgress<1&&s>=map.y-viewportHeight*.25){
+     mapStartedAt=performance.now();playMapVideo(root);
+     if(mapProgress<1)mapFrame=requestAnimationFrame(tickMap);
+    }
+    const p=sampleJourney(knots,s);
+    if(mapStartedAt!==undefined&&!passed&&s>=map.y-viewportHeight*.25){
+     const journey=sampleJourney(knots,map.y+mapGeometry.duration);
+     const shift=Math.max(0,Math.min(mapGeometry.duration,s-map.y))-mapGeometry.duration;
+     const blend=ease(mapProgress),sway=Math.sin(Math.PI*mapProgress)*6;
+     for(const key of ['a','b']as const){const from=p[key],to=journey[key],side=key==='a'?1:-1;p[key]={...to,x:from.x+(to.x-from.x)*blend+side*sway,y:from.y+(to.y+shift-from.y)*blend+side*Math.sin(Math.PI*2*mapProgress)*4,rotation:from.rotation+(to.rotation-from.rotation)*blend,width:from.width+(to.width-from.width)*blend,height:from.height+(to.height-from.height)*blend};}
+    }
+    place([p.a,p.b]);
     for(const {route,mask,path}of rendered){const visible=routeLengthAt(route,Math.max(0,s-6));mask.style.strokeDashoffset=String(Math.max(0,route.length-visible));path.style.opacity=visible>.05?'1':'0';}
     svg.current!.style.opacity=s<=routes[0].start?'0':'1';
     for(const decoration of decorations){const influence=Math.exp(-Math.abs(p.route.y-decoration.y)/230),phase=s/115+decoration.index;gsap.set(decoration.el,{x:Math.sin(phase)*decoration.sway*influence,y:Math.cos(phase*.8)*decoration.sway*influence,rotation:Math.sin(phase+.5)*decoration.tilt*influence});}
@@ -113,7 +136,7 @@ export function StoryMotion(){
     reveal('childhood',incoming(g.childhood.y),-.8);
     reveal('adult',incoming(g.adult.y),.6);
     reveal('countdown',incoming(g.countdown.y),-1);
-    const u=clamp((s-map.y)/mapGeometry.duration),camera=drawMapCamera(root,u),pinned=Math.max(0,Math.min(mapGeometry.duration,s-map.y));
+    const u=mapProgress,camera=drawMapCamera(root,u),pinned=Math.max(0,Math.min(mapGeometry.duration,s-map.y));
     mapHeading.setAttribute('y',String(map.y+pinned+17));
     if(camera.noteRect&&camera.noteReveal>.01){const b=camera.noteRect;for(const [key,value]of Object.entries({x:g.mapFrame.x+b.x-7,y:map.y+pinned+g.mapFrame.y+b.y-7,width:b.width+14,height:b.height+16}))noteMask.setAttribute(key,String(value));}else noteMask.setAttribute('width','0');
     const headingHole={x:15,y:map.y+pinned+17,width:w-30,height:Math.max(120,g.mapFrame.y-17)};
@@ -140,6 +163,7 @@ export function StoryMotion(){
    // Read the same physical source after updates and refreshes. Restored trigger
    // progress during a lifecycle refresh must never substitute an older pose.
    const drawNative=()=>{lastNative=Math.max(0,Math.min(maxScroll,window.scrollY-mainTop));draw(lastNative);};
+   redraw=drawNative;
    drawNative();
    trigger=ScrollTrigger.create({trigger:root,start:'top top',end:'bottom bottom',onUpdate:drawNative,onRefresh:drawNative});
    if(new URLSearchParams(location.search).has('inspect'))(window as Window&{__weddingMotion?:unknown}).__weddingMotion={geometry:g,knots,clearance,ink,heartClearance:merged,routes,sample:(s:number)=>sampleJourney(knots,s)};
@@ -152,7 +176,7 @@ export function StoryMotion(){
   const orient=()=>{windowWidth=innerWidth;viewportHeight=innerHeight;schedule();};
   window.addEventListener('resize',resize);window.addEventListener('invitation-countdown-layout',schedule);screen.orientation?.addEventListener('change',orient);media.addEventListener('change',schedule);document.fonts.ready.then(schedule);
   setCalibration(process.env.NODE_ENV==='development'&&new URLSearchParams(location.search).has('anchors'));
-  return()=>{disposed=true;cancelAnimationFrame(queued);trigger?.kill();observer.disconnect();window.removeEventListener('resize',resize);window.removeEventListener('invitation-countdown-layout',schedule);screen.orientation?.removeEventListener('change',orient);media.removeEventListener('change',schedule);root.classList.remove('enhanced','calm');clear();delete(window as Window&{__weddingMotion?:unknown}).__weddingMotion;};
+  return()=>{disposed=true;cancelAnimationFrame(queued);cancelAnimationFrame(mapFrame);root.removeEventListener('invitation-map-failed',finishMap);trigger?.kill();observer.disconnect();window.removeEventListener('resize',resize);window.removeEventListener('invitation-countdown-layout',schedule);screen.orientation?.removeEventListener('change',orient);media.removeEventListener('change',schedule);root.classList.remove('enhanced','calm');clear();delete(window as Window&{__weddingMotion?:unknown}).__weddingMotion;};
  },[]);
  return <div className="motion-layer" ref={layer} aria-hidden="true"><svg className="route-svg" ref={svg}><defs ref={defs}/><g ref={paths}/>{calibration&&[0,1].map(i=><circle key={i}ref={node=>{markers.current[i]=node;}}r="15"stroke="#477f67"fill="none"/>)}</svg><div ref={pairLayer} className="traveller-group" style={{position:'absolute',inset:0,pointerEvents:'none'}}>{[0,1].map(i=><div className="traveller" data-heart={i}key={i}ref={node=>{hearts.current[i]=node;}}><Artwork id="palastine_small_hart"/></div>)}</div>{calibration&&<p className="anchor-calibration">PNG anchor calibration · lib/assets.ts</p>}</div>;
 }

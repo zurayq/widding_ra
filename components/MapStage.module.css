@@ -1,4 +1,4 @@
-.stage{--map-pin-height:740px;--map-frame-height:580px;--map-scroll-distance:1100px;height:var(--map-pin-height);position:relative}
+.stage{--map-pin-height:740px;--map-frame-height:580px;--map-scroll-distance:180px;height:var(--map-pin-height);position:relative}
 :global(.enhanced) .stage{height:calc(var(--map-pin-height) + var(--map-scroll-distance))}
 .pin{position:relative;min-height:var(--map-pin-height);padding:28px 0 0;display:flex;flex-direction:column}
 :global(.enhanced) .pin{position:sticky;top:0}
