@@ -7,6 +7,7 @@ import {buildJourney,sampleJourney,type Box,type Pose,type StoryGeometry,type Kn
 import {buildRouteNetwork,routeLengthAt,type RouteSpan} from '../lib/trails';
 import {configureMapGeometry,drawMapCamera,showFinalMap} from '../lib/map-camera';
 import {playMapVideo,stopMapVideo} from '../lib/map-video';
+import {mapVideo} from '../lib/map-video-config';
 const clamp=(n:number)=>Math.max(0,Math.min(1,n));
 const ease=(n:number)=>{const t=clamp(n);return t*t*(3-2*t);};
 const range=(s:number,a:number,b:number)=>ease((s-a)/(b-a));
@@ -26,7 +27,7 @@ export function StoryMotion(){
   const tickMap=(now:number)=>{
    mapFrame=0;
    if(disposed||media.matches||mapStartedAt===undefined)return;
-   mapProgress=Math.max(mapProgress,clamp((now-mapStartedAt)/2000));redraw();
+   mapProgress=Math.max(mapProgress,clamp((now-mapStartedAt)/mapVideo.revealDurationMs));redraw();
    if(mapProgress<1)mapFrame=requestAnimationFrame(tickMap);
   };
   root.addEventListener('invitation-map-failed',finishMap);

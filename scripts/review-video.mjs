@@ -1,6 +1,7 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
+import {mapVideo} from '../lib/map-video-config.ts';
 const base=process.env.INVITATION_REVIEW_URL||`http://localhost:${process.env.PORT||3000}`;
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE_PATH});
 await mkdir('.verification/video',{recursive:true});
@@ -14,17 +15,17 @@ try{
   assert.equal(await page.locator('video').getAttribute('src'),null,'Opening does not download the map clip');
   assert(await page.evaluate(()=>{const g=window.__weddingMotion.geometry;return g.map.height-g.pinHeight<=181;}),'Long scroll runway removed');
   await approach(page);await page.waitForFunction(()=>document.querySelector('video').readyState>=2);
-  await page.evaluate(()=>{window.__mapHeartFrames=[];const track=now=>{window.__mapHeartFrames.push({now,scroll:scrollY,u:Number(document.querySelector('#invitation').dataset.mapProgress),pair:[...document.querySelectorAll('.traveller')].map(el=>{const b=el.getBoundingClientRect();return{x:b.x,y:b.y};})});if(window.__mapHeartFrames.length<160)requestAnimationFrame(track);};requestAnimationFrame(track);});
+  await page.evaluate(()=>{window.__mapHeartFrames=[];const track=now=>{window.__mapHeartFrames.push({now,scroll:scrollY,u:Number(document.querySelector('#invitation').dataset.mapProgress),pair:[...document.querySelectorAll('.traveller')].map(el=>{const b=el.getBoundingClientRect();return{x:b.x,y:b.y};})});if(window.__mapHeartFrames.length<400)requestAnimationFrame(track);};requestAnimationFrame(track);});
   await enter(page);const y=await page.evaluate(()=>scrollY);
-  await page.waitForTimeout(650);
+  await page.waitForTimeout(1600);
   const mid=await page.evaluate(()=>({u:Number(document.querySelector('#invitation').dataset.mapProgress),time:document.querySelector('video').currentTime,paused:document.querySelector('video').paused}));
   assert(mid.u>.15&&mid.u<.75,'Zoom advances without scrolling');assert(mid.time>0&&!mid.paused,'Video plays rather than seeking every frame');
-  await page.waitForFunction(()=>Number(document.querySelector('#invitation').dataset.mapProgress)===1,null,{timeout:2300});
+  await page.waitForFunction(()=>Number(document.querySelector('#invitation').dataset.mapProgress)===1,null,{timeout:mapVideo.revealDurationMs});
   assert.equal(await page.evaluate(()=>scrollY),y,'Never scroll the page automatically');
   // Normalize to timeline progress, so a busy headless decoder skipping
   // presentation frames does not masquerade as a discontinuous heart curve.
-  const largestStep=await page.evaluate(()=>{const frames=window.__mapHeartFrames;let largest=0;for(let j=1;j<frames.length;j++){const a=frames[j-1],b=frames[j];if(a.scroll!==b.scroll||a.u<.01||b.u<=a.u)continue;for(let i=0;i<2;i++)largest=Math.max(largest,Math.hypot(b.pair[i].x-a.pair[i].x,b.pair[i].y-a.pair[i].y)*.008335/(b.u-a.u));}return largest;});
-  assert(largestStep<12,'Restrained continuous heart curve during the two-second zoom: '+largestStep);
+  const largestStep=await page.evaluate(duration=>{const frames=window.__mapHeartFrames;let largest=0;for(let j=1;j<frames.length;j++){const a=frames[j-1],b=frames[j];if(a.scroll!==b.scroll||a.u<.01||b.u<=a.u)continue;for(let i=0;i<2;i++)largest=Math.max(largest,Math.hypot(b.pair[i].x-a.pair[i].x,b.pair[i].y-a.pair[i].y)*(16.67/duration)/(b.u-a.u));}return largest;},mapVideo.revealDurationMs);
+  assert(largestStep<12,'Restrained continuous heart curve during the five-second zoom: '+largestStep);
   assert(await page.locator('[data-map-note]').isVisible());
   assert(await page.evaluate(()=>{const note=document.querySelector('[data-map-note]').getBoundingClientRect(),pin=document.querySelector('.venue-pin').getBoundingClientRect();return note.bottom<pin.top;}),'Venue paper is above its pin');
   assert.equal(new URL(await page.locator('.directions').getAttribute('href')).searchParams.get('destination'),'40.7603888,29.7847177');
@@ -48,5 +49,5 @@ try{
  }
  const context=await browser.newContext({reducedMotion:'reduce'}),page=await context.newPage();await page.goto(base);await page.locator('[data-map-video]').scrollIntoViewIfNeeded();
  assert.equal(await page.locator('video').getAttribute('src'),null);assert(await page.locator('[data-map-note]').isVisible());await context.close();
- console.log('Automatic map checks passed: two-second playback, short section, no page scrolling/replay, directions, pin placement, blocked/pending/rejected/fast and reduced-motion fallbacks.');
+ console.log('Automatic map checks passed: five-second playback, short section, no page scrolling/replay, directions, pin placement, blocked/pending/rejected/fast and reduced-motion fallbacks.');
 }finally{await browser.close();}
