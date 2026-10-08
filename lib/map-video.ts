@@ -1,3 +1,4 @@
+import { mapVideo } from './map-video-config';
 /** A latest-target seek queue: one decoder seek in flight, never autoplay. */
 type Controller = { seek: (progress: number) => void; static: () => void };
 const controllers = new WeakMap<HTMLElement, Controller>();
@@ -25,7 +26,7 @@ export function attachMapVideo(root: HTMLElement, video: HTMLVideoElement, conta
   const start = () => {
     if (started || disposed || media.matches) return;
     started = true; container.dataset.videoState = 'loading';
-    video.src = '/assets/map-zoom.mp4'; video.preload = 'auto'; video.load();
+    video.src = mapVideo.src; video.preload = 'auto'; video.load();
   };
   const settled = () => {
     const expected=Math.min(Math.max(0,video.duration-1/60),target*video.duration);

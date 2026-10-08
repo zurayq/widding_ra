@@ -1,12 +1,13 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
+import {mapVideo} from '../lib/map-video-config.ts';
 const base=process.env.INVITATION_REVIEW_URL||`http://localhost:${process.env.PORT||3000}`;
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_EXECUTABLE_PATH||(process.platform==='win32'?'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe':undefined)});
 await mkdir('.verification/video',{recursive:true});
 async function seek(page,progress){
   await page.evaluate(u=>{const g=window.__weddingMotion.geometry;scrollTo(0,g.map.y+u*(g.map.height-g.pinHeight));},progress);
-  await page.waitForFunction(u=>{const v=document.querySelector('[data-map-video] video');return v.readyState>=2&&!v.seeking&&Math.abs(v.currentTime-Math.min(v.duration-1/60,u*v.duration))<.04;},progress,{timeout:30000});
+  await page.waitForFunction(u=>{const v=document.querySelector('[data-map-video] video');return v.readyState>=2&&!v.seeking&&Math.abs(v.currentTime-Math.min(v.duration-1/60,Math.min(1,u/.82)*v.duration))<.04;},progress,{timeout:30000});
 }
 try{
  for(const width of [320,390,1440]){
@@ -17,6 +18,7 @@ try{
   for(const u of [.05,.3,.6,.9,1,.7,.25,.9]){
     await seek(page,u);
     assert.equal(await page.locator('[data-map-video]').getAttribute('data-video-state'),'ready');
+    assert(await page.locator('video').evaluate((v,width)=>v.videoWidth===width && Math.abs(v.duration-6.4)<.05,mapVideo.width),'Corrected full-HD clip decodes');
     assert(await page.locator('video').evaluate(v=>v.paused&&!v.autoplay&&v.muted&&v.playsInline),'Scroll-only, silent inline video');
   }
   const time=await page.locator('video').evaluate(v=>v.currentTime);
@@ -31,7 +33,7 @@ try{
  const blocked=await browser.newContext({viewport:{width:390,height:844}});await blocked.route('**/assets/map-zoom.mp4',route=>route.abort());
  const page=await blocked.newPage();await page.goto(base+'/?inspect=1');await page.waitForFunction(()=>window.__weddingMotion?.geometry);
  await page.evaluate(()=>{const g=window.__weddingMotion.geometry;scrollTo(0,g.map.y+1050);});await page.waitForFunction(()=>document.querySelector('[data-map-video]').dataset.videoState==='error');
- assert(await page.locator('[data-map-fallback] img').evaluate(image=>image.complete&&image.naturalWidth>0),'Video failure uses approved single-image fallback');
+ assert(await page.locator('[data-map-static] img').evaluate((image,width)=>image.complete&&image.naturalWidth===width,mapVideo.width),'Video failure uses corrected final frame');
  assert(await page.locator('[data-map-note]').isVisible());await page.screenshot({path:'.verification/video/video-failure.png'});await blocked.close();
  const reduced=await browser.newContext({reducedMotion:'reduce'}),reducedPage=await reduced.newPage();await reducedPage.goto(base);await reducedPage.locator('[data-map-video]').scrollIntoViewIfNeeded();await reducedPage.waitForTimeout(200);
  assert.equal(await reducedPage.locator('video').getAttribute('src'),null,'Reduced motion does not load the video');assert(await reducedPage.locator('[data-map-note]').isVisible());await reduced.close();

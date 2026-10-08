@@ -6,12 +6,14 @@
 .frame{position:relative;flex:none;margin:18px 14px 35px;height:var(--map-frame-height);overflow:hidden;background:#f6eddc;border:1px solid #d5bd8e36;border-radius:48% 51% 44% 46% / 2% 3% 2% 3%;isolation:isolate;box-shadow:0 9px 28px #7862380a}
 .plane{position:absolute;transform-origin:0 0;will-change:transform,opacity;opacity:0;pointer-events:none;z-index:0}.plane[data-map-layer="3"]{opacity:1}.plane>:global(.artwork){width:100%;height:100%}
 .media{position:absolute;inset:0;overflow:hidden;pointer-events:none}
-.video,.finalStill{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.video{opacity:0}.fallbackPlane{position:absolute;left:0;top:0;transform-origin:0 0;display:none}.fallbackPlane img{display:block;width:100%;height:100%}
-:global(.enhanced) .fallbackPlane{display:block}:global(.enhanced) .finalStill{display:none}
+.video,.finalStill{position:absolute;inset:0;width:100%;height:100%;object-fit:fill}
+.video{opacity:0}.staticPlane,.fallbackPlane{position:absolute;left:0;top:0;transform-origin:0 0}.fallbackPlane{display:none}.fallbackPlane img{display:block;width:100%;height:100%}
+:global(.enhanced) .fallbackPlane{display:block}:global(.enhanced) .staticPlane{display:none}
 :global(.enhanced) .media[data-video-state="ready"] .video{opacity:1}
-:global(.enhanced) .media[data-video-state="ready"] .fallbackPlane{visibility:hidden}
-@media(prefers-reduced-motion:reduce){.video,.fallbackPlane{display:none!important}.finalStill{display:block!important}}
+:global(.enhanced) .media[data-video-state="ready"] .fallbackPlane>img{visibility:hidden}
+:global(.enhanced) .media[data-video-state="error"] .staticPlane,:global(.enhanced) .media[data-video-state="static"] .staticPlane{display:block}
+:global(.enhanced) .media[data-video-state="error"] .fallbackPlane,:global(.enhanced) .media[data-video-state="static"] .fallbackPlane{display:none}
+@media(prefers-reduced-motion:reduce){.video,.fallbackPlane{display:none!important}.staticPlane{display:block!important}}
 .vignette{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,#fbf6ec66,transparent 12%,transparent 80%,#fbf6ecaa)}
 .marker{position:absolute;left:50%;top:63.86%;width:27px;height:35px;transform:translate(-50%,-100%);color:#a42d3b;z-index:5;pointer-events:none;filter:drop-shadow(0 2px 2px #6c461a24)}.marker svg{width:100%;height:100%}
 .annotation{position:absolute;left:50%;bottom:calc(36.14% + 46px);transform:translateX(-50%);width:calc(100% - 42px);max-width:282px;transform-origin:50% 100%;z-index:8;filter:drop-shadow(0 5px 6px #694b2822)}

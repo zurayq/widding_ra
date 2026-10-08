@@ -1,7 +1,8 @@
 import { seekMapVideo, stopMapVideo } from './map-video';
+import { mapVideo } from './map-video-config';
 type Point = { x: number; y: number };
 export const mapCameraConfig = {
-  scrollDistance: 1100,
+  scrollDistance: 1100, arrival: mapVideo.arrival,
   noteStart: .82, noteEnd: .95,
 };
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
@@ -26,21 +27,51 @@ function annotationRect(anchor: Point, width: number, height: number, noteWidth:
   };
 }
 
-export function sampleMapCamera(u: number, width: number, height: number): MapCameraPose[] {
-  // Exactly the approved single-scene camera, also used when video fails.
-  const t=clamp(u*12/11.4), amount=t*t*t*(t*(t*6-15)+10);
-  const scale=Math.exp(Math.log(3.3)*amount), fit=Math.max(width/1280,height/720);
-  const sw=1280*fit,sh=720*fit;
-  const cx=mix(.5,.390,amount),cy=mix(.5,.448,amount);
-  return [{width:sw,height:sh,x:width/2-cx*sw*scale,y:height/2-cy*sh*scale,scale,opacity:1}];
+/** Feature tracking uses the same camera as the approved video renderer.
+ * This is an illustrated shore point, never a real venue coordinate. */
+export function videoAnchor(u: number): Point {
+  const t = clamp(u / mapCameraConfig.arrival) * mapVideo.duration;
+  const q = clamp((t-.35)/5.25);
+  const progress = q*q*q*(10+q*(-15+6*q));
+  const z = Math.exp(Math.log(17)*progress), pan = 1-Math.pow(1-progress,1.8);
+  const cx = 836+(655-836)*pan, cy = 470.5+(394-470.5)*pan;
+  const roll = -.9*Math.PI/180*progress, pitch = .055*progress;
+  const c = Math.cos(roll), sn = Math.sin(roll);
+  const sx = 1672/(mapVideo.width*z), sy = 941/(mapVideo.height*z);
+  const den = 1-pitch/2, h = pitch/mapVideo.height;
+  const a = c*sx, b = -sn*sy+cx*h, d = sn*sx, e = c*sy+cy*h;
+  const ox = cx*den-c*sx*mapVideo.width/2+sn*sy*mapVideo.height/2;
+  const oy = cy*den-sn*sx*mapVideo.width/2-c*sy*mapVideo.height/2;
+  const source = { x: 669.6, y: 384 };
+  const by = b-source.x*h, ey = e-source.y*h;
+  const rx = source.x*den-ox, ry = source.y*den-oy, det = a*ey-by*d;
+  return { x: (rx*ey-by*ry)/det/mapVideo.width, y: (a*ry-rx*d)/det/mapVideo.height };
 }
 
-/** Frame-local illustration anchor; intentionally separate from real directions. */
+export function sampleMapCamera(u: number, width: number, height: number): MapCameraPose[] {
+  const anchor = videoAnchor(u);
+  const fit = Math.max(width/mapVideo.width, height/mapVideo.height);
+  const amount = between(u,.69,mapCameraConfig.arrival);
+  // Preserve the established pin/card position while following the new clip.
+  const finalScale = .6386/videoAnchor(1).y;
+  const scale = mix(1,finalScale,amount);
+  const sw = mapVideo.width*fit, sh = mapVideo.height*fit;
+  const x = clamp(width*.5-sw*scale*anchor.x,width-sw*scale,0);
+  const y = clamp(height*mix(.42,.6386,amount)-sh*scale*anchor.y,height-sh*scale,0);
+  return [{width:sw,height:sh,x,y,scale,opacity:1}];
+}
+
+/** Illustration shore point, independent of the real venue coordinates. */
 export function cameraAnchor(u: number, width: number, height: number): Point {
-  // The paper art is not georeferenced. This illustration point is independent
-  // of the actual coordinates used by the directions link.
-  const layer = sampleMapCamera(u, width, height)[0];
-  return { x: layer.x+.390*layer.width*layer.scale, y: layer.y+.490*layer.height*layer.scale };
+  const pose = sampleMapCamera(u,width,height)[0], anchor = videoAnchor(u);
+  return {x:pose.x+anchor.x*pose.width*pose.scale,y:pose.y+anchor.y*pose.height*pose.scale};
+}
+
+function applyPose(plane: HTMLElement, pose: MapCameraPose) {
+  plane.style.width=pose.width+'px'; plane.style.height=pose.height+'px';
+  plane.style.left='0px'; plane.style.top='0px';
+  plane.style.transform='translate('+pose.x+'px,'+pose.y+'px) scale('+pose.scale+')';
+  plane.style.opacity=String(pose.opacity);
 }
 
 /** Called by the invitation's one controller after width/fonts/locale/image changes. */
@@ -68,6 +99,8 @@ export function configureMapGeometry(root: HTMLElement, viewportHeight=window.in
     note: annotationRect(finalAnchor, frame.clientWidth, frame.clientHeight, note.offsetWidth, note.offsetHeight),
     cityAnchor: finalAnchor,
   };
+  const finalPose=sampleMapCamera(1,geometry.frame.width,geometry.frame.height)[0];
+  root.querySelectorAll<HTMLElement>('[data-map-static]').forEach(plane=>applyPose(plane,finalPose));
   measured.set(root, geometry);
   elements.set(root,{planes:Array.from(root.querySelectorAll<HTMLElement>('[data-map-fallback]')),marker:root.querySelector<HTMLElement>('.venue-pin'),note});
   return geometry;
@@ -75,18 +108,12 @@ export function configureMapGeometry(root: HTMLElement, viewportHeight=window.in
 
 /** Pure progress-to-DOM draw: no timer, inertia, tween, or independent trigger. */
 export function drawMapCamera(root: HTMLElement, u: number) {
-  seekMapVideo(root,u);
+  seekMapVideo(root,clamp(u/mapCameraConfig.arrival));
   const geometry = measured.get(root) || configureMapGeometry(root);
   const { width, height } = geometry.frame;
   const poses = sampleMapCamera(u, width, height);
   const cached=elements.get(root)!;
-  cached.planes.forEach((plane, index) => {
-    const pose = poses[index];
-    plane.style.width = pose.width+'px'; plane.style.height = pose.height+'px';
-    plane.style.left = '0px'; plane.style.top = '0px';
-    plane.style.transform = 'translate('+pose.x+'px,'+pose.y+'px) scale('+pose.scale+')';
-    plane.style.opacity = String(pose.opacity);
-  });
+  cached.planes.forEach((plane,index)=>applyPose(plane,poses[index]));
   const anchor = cameraAnchor(u, width, height);
   const {marker,note}=cached;
   const noteReveal = between(u, mapCameraConfig.noteStart, mapCameraConfig.noteEnd);

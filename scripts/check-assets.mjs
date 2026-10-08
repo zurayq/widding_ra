@@ -1,5 +1,6 @@
 import sharp from 'sharp';
 import {assets} from '../lib/assets.ts';
+import {mapVideo} from '../lib/map-video-config.ts';
 import {readdir,stat,readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 let bytes=0;
@@ -12,7 +13,7 @@ for(const asset of Object.values(assets)){
  const m=await sharp(file).metadata();assert(Math.abs(m.width/m.height-asset.sourceSize.width/asset.sourceSize.height)<.006,'Unexpected aspect ratio: '+filename);
 }
 for(const name of ['map-zoom-start.webp','map-zoom-end.webp']){
- const image=sharp('public/assets/'+name);await image.raw().toBuffer();const m=await image.metadata();assert.equal(m.width,1280);assert.equal(m.height,720);
+ const image=sharp('public/assets/'+name);await image.raw().toBuffer();const m=await image.metadata();assert.equal(m.width,mapVideo.width);assert.equal(m.height,mapVideo.height);
 }
 const video=await readFile('public/assets/map-zoom.mp4');
 assert.equal(video.toString('ascii',4,8),'ftyp','Map video has a valid MP4 file-type box');
