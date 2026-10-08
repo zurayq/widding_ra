@@ -68,7 +68,7 @@ export default function Page(){
           <div className="resting-place" aria-hidden="true"/>
         </div>
       </div>
-      <a className="wordmark" href="mailto:studio@zurayq.lol">URAR Space</a>
+      <a className="wordmark" href="https://studio.zurayq.lol">URAR Space</a>
     </footer>
   </main>;
 }

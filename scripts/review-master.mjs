@@ -20,7 +20,7 @@ try{
   check(await page.locator('[data-route]').count()===1,'Exactly one shared trail');check(await page.locator('.directions').count()===1,'Configured destination enables directions');check(await page.locator('.landmark').count()===0,'Unfinished skylines hidden');
   check(await page.locator('.verse-text').getAttribute('dir')==='rtl'&&await page.locator('.verse-text').getAttribute('lang')==='ar','Arabic keeps correct direction and language');
   check(await page.locator('.wordmark').textContent()==='URAR Space','Studio credit uses the approved name');
-  check(await page.locator('.wordmark').getAttribute('href')==='mailto:studio@zurayq.lol','Studio credit opens the supplied email');
+  check(await page.locator('.wordmark').getAttribute('href')==='https://studio.zurayq.lol','Studio credit opens the supplied studio website');
   const initialRequests=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>r.name.includes('/assets/')).map(r=>r.name));
   check(!initialRequests.some(url=>/mapCity.webp/.test(url)),'Final map is not eagerly downloaded on opening');
   for(const asset of Object.values(assets)){
