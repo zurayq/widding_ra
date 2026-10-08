@@ -64,7 +64,7 @@ export default function Page(){
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="skyline-art" src="/assets/skyline-keepsake.webp" width={1000} height={500} alt="" aria-hidden="true" loading="lazy"/>
         <div className="skyline-overlay">
-          <div className="closing-copy"><h2 className="ending-line">{copy.closing}</h2></div>
+          <div className="closing-copy"><h2 className="ending-line" lang="en" dir="ltr">{copy.closing}</h2></div>
           <div className="resting-place" aria-hidden="true"/>
         </div>
       </div>

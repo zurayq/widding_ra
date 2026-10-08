@@ -100,3 +100,6 @@ html[lang="ar"] .countdown-grid small{line-height:1.9;margin-top:14px}
 .opening .scroll-invitation{margin-top:38px}
 html[lang="ar"] .origin-labels{font-family:var(--font-arabic),serif;letter-spacing:0}
 @media(prefers-reduced-motion:reduce){.edge-pattern{opacity:.18!important}}
+
+/* The English closing signature keeps the same type and direction in every locale. */
+.ending .ending-line[lang="en"]{font-family:var(--font-serif),Georgia,serif;direction:ltr}
