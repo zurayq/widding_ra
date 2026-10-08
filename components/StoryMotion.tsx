@@ -21,7 +21,7 @@ export function StoryMotion(){
   let trigger:ScrollTrigger|undefined,disposed=false,queued=0,currentWidth=0,currentHeight=0;
   let viewportHeight=innerHeight,windowWidth=innerWidth,buildCount=0;
   let previousGeometry:StoryGeometry|undefined,previousKnots:Knot[]|undefined,lastNative=scrollY;
-  const animated=Array.from(root.querySelectorAll<HTMLElement>('[data-reveal],.origins,.opening-heading,.edge-pattern'));
+  const animated=Array.from(root.querySelectorAll<HTMLElement>('[data-reveal],.origins,.opening-heading'));
   const clear=()=>{animated.forEach(el=>{el.style.opacity='';el.style.transform='';});hearts.current.forEach(heart=>{const art=heart?.querySelector<HTMLElement>('.artwork');if(art)art.style.transform='';});};
   const origins=(main:DOMRect):[Pose,Pose]=>{
    const measure=(id:'algeria_hart_map'|'palastine_hart_map'):Pose=>{
@@ -93,7 +93,7 @@ export function StoryMotion(){
     return{route,mask:solid,path};
    });
    const revealElements=new Map(Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]')).map(el=>[el.dataset.reveal!,el]));
-   const originElement=root.querySelector('.origins'),headingElement=root.querySelector('.opening-heading'),patterns=Array.from(root.querySelectorAll('.edge-pattern'));
+   const originElement=root.querySelector('.origins'),headingElement=root.querySelector('.opening-heading');
    const decorations=Array.from(root.querySelectorAll<HTMLElement>('[data-decoration]')).map((el,index)=>({el,index,y:el.getBoundingClientRect().top-main.top,sway:Number(el.dataset.sway),tilt:Number(el.dataset.tilt)}));
    const reveal=(key:string,p:number,tilt=0)=>gsap.set(revealElements.get(key)!,{opacity:p,y:(1-p)*11,scale:.984+.016*p,rotation:tilt*(1-p)});
    const heartArtwork=hearts.current.map(heart=>heart!.querySelector<HTMLElement>('.artwork')!);
@@ -103,7 +103,6 @@ export function StoryMotion(){
     svg.current!.style.opacity=s<=routes[0].start?'0':'1';
     for(const decoration of decorations){const influence=Math.exp(-Math.abs(p.route.y-decoration.y)/230),phase=s/115+decoration.index;gsap.set(decoration.el,{x:Math.sin(phase)*decoration.sway*influence,y:Math.cos(phase*.8)*decoration.sway*influence,rotation:Math.sin(phase+.5)*decoration.tilt*influence});}
     const departure=range(s,58,285);gsap.set(originElement,{opacity:1-departure,y:-20*departure,scale:1-.06*departure});
-    for(const pattern of patterns)gsap.set(pattern,{opacity:.38*(1-departure),y:-18*departure});
     gsap.set(headingElement,{opacity:1-range(s,70,290),y:-9*range(s,70,290)});
     const focus=Math.min(370,viewportHeight*.43),verseIn=range(s,g.verse.y-focus-135,g.verse.y-focus-5),verseOut=range(s,g.verse.y+g.verse.height-focus+50,g.verse.y+g.verse.height-focus+155);
     reveal('verse',verseIn*(1-verseOut));

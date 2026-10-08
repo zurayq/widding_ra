@@ -91,11 +91,12 @@ html[lang="ar"] .countdown-grid small{line-height:1.9;margin-top:14px}
 .heart-home .artwork{width:100%;height:100%}
 .origin-labels{display:grid;grid-template-columns:1fr 1fr;text-align:center;margin-top:-14px;padding-bottom:10px;color:#705b3f;font-size:.8125rem;letter-spacing:.12em;text-transform:uppercase;line-height:1.6}
 .origin-labels span:first-child{padding-left:12%}.origin-labels span:last-child{padding-left:25%}
-.traditional-border{display:block;width:100%;height:100%;color:#b07952;pointer-events:none}
-.edge-pattern{top:-16px;bottom:-70px;height:auto;width:32px;opacity:.38;z-index:1;overflow:hidden;mask-image:linear-gradient(to bottom,transparent,#000 8%,#000 84%,transparent),linear-gradient(to right,#000 55%,transparent);mask-composite:intersect}
-.edge-left{left:0}.edge-right{right:0;mask-image:linear-gradient(to bottom,transparent,#000 8%,#000 84%,transparent),linear-gradient(to left,#000 55%,transparent)}
-.story-pattern{width:28px;opacity:.09;overflow:hidden}
-.story-pattern .traditional-border{height:100%;min-height:640px}
+.opening{min-height:max(710px,var(--story-viewport-height,100svh))}
+.original-pattern-strip{width:100%;height:100%;overflow:hidden;pointer-events:none}
+.original-pattern-tile{display:block;width:100%;height:auto;flex:none;pointer-events:none}
+.edge-pattern{top:0;bottom:0;height:100%;width:clamp(48px,16vw,68px);opacity:.18;z-index:0;overflow:hidden;mask-image:linear-gradient(to bottom,#000 90%,transparent),linear-gradient(to right,#000 65%,transparent);mask-composite:intersect}
+.edge-left{left:0}.edge-right{right:0;mask-image:linear-gradient(to bottom,#000 90%,transparent),linear-gradient(to left,#000 65%,transparent)}
+.story-pattern{width:clamp(48px,16vw,68px);opacity:.035;overflow:hidden}
 .opening .scroll-invitation{margin-top:38px}
 html[lang="ar"] .origin-labels{font-family:var(--font-arabic),serif;letter-spacing:0}
-@media(prefers-reduced-motion:reduce){.edge-pattern{opacity:.38!important}}
+@media(prefers-reduced-motion:reduce){.edge-pattern{opacity:.18!important}}

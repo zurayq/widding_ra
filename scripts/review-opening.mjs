@@ -22,7 +22,11 @@ try{
   assert.equal(await page.locator('.traveller').count(),2);
   assert.equal(await page.locator('.origin-labels span').count(),2);
   const requests=await page.evaluate(()=>performance.getEntriesByType('resource').map(r=>r.name));
-  assert(!requests.some(url=>/\/(algeria_hart_map|palastine_hart_map|openingPatternAlgeria|openingPatternPalestine)\.webp/.test(url)),'Legacy maps/patterns are not downloaded');
+  assert(!requests.some(url=>/\/(algeria_hart_map|palastine_hart_map)\.webp/.test(url)),'Legacy maps are not downloaded');
+  for(const id of ['openingPatternAlgeria','openingPatternPalestine'])assert(requests.some(url=>url.endsWith('/'+id+'.webp')),'Original supplied pattern is loaded: '+id);
+  assert.equal(await page.locator('.traditional-border').count(),0,'No recreated motifs');
+  assert(await page.evaluate(()=>{const opening=document.querySelector('.opening').getBoundingClientRect();return [...document.querySelectorAll('.opening>.edge-pattern')].every(el=>{const b=el.getBoundingClientRect();return Math.abs(b.top-opening.top)<.5&&Math.abs(b.bottom-opening.bottom)<.5&&b.width>=48;});}),'Large original borders cover the full opening height');
+  assert(await page.evaluate(()=>[...document.querySelectorAll('.edge-pattern .original-pattern-tile')].every(el=>{const v=el.viewBox.baseVal,b=el.getBoundingClientRect();return Math.abs(b.width/b.height-v.width/v.height)<.001;})),'Original motif proportions are not stretched');
   await page.screenshot({path:'.verification/opening/approved-'+width+'.png'});
   await page.evaluate(()=>scrollTo(0,320));await page.waitForTimeout(200);
   assert(Number(await page.locator('.origins').evaluate(e=>e.style.opacity))<.01,'No baked hearts remain after departure');
