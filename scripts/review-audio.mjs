@@ -12,11 +12,16 @@ try{
   await page.goto(base+'/?lang='+lang);await page.waitForTimeout(200);
   const control=page.locator('[data-invitation-audio]'),button=control.locator('button');
   assert.equal(await control.getAttribute('data-audio-state'),'idle');
+  await control.locator('img').evaluate(image=>image.decode());
+  assert.equal(await page.locator('[data-audio-hint]').textContent(),lang==='en'?'Press me':lang==='tr'?'Bana dokun':'اضغط هنا');
+  await page.screenshot({path:'.verification/audio/opening-'+lang+'.png'});
   assert(!(await page.evaluate(()=>performance.getEntriesByType('resource').some(r=>r.name.includes('wedding-ar101.mp3')))),'Audio does not download on opening');
   await page.evaluate(()=>scrollTo(0,80));await page.waitForFunction(()=>document.querySelector('[data-invitation-audio]').dataset.audioState==='blocked');
   assert(await button.getAttribute('aria-label'),'Blocked playback has an accessible tap fallback');
+  assert(await page.locator('[data-audio-hint]').isVisible(),'Blocked playback keeps the paper arrow prompt');
   await button.click();await page.waitForFunction(()=>document.querySelector('[data-invitation-audio] audio').currentTime>0);
   assert.equal(await button.getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('[data-audio-hint]').count(),0,'Prompt clears while audio plays');
   assert(await control.locator('audio').evaluate(a=>Math.abs(a.duration-39.445)<.1&&!a.loop),'Supplied recording plays once');
   await button.click();await page.waitForFunction(()=>document.querySelector('[data-invitation-audio]').dataset.audioState==='paused');
   const time=await control.locator('audio').evaluate(a=>a.currentTime);await page.evaluate(()=>scrollTo(0,180));await page.waitForTimeout(200);

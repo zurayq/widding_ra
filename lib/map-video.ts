@@ -1,5 +1,5 @@
 import { mapVideo } from './map-video-config';
-/** Preload near the map, then play the full clip silently once at its native speed. */
+/** Preload near the map, then play the full clip silently once in five seconds. */
 type Controller = { seek: (progress: number) => void; play: () => void; static: () => void };
 const controllers = new WeakMap<HTMLElement, Controller>();
 const targets = new WeakMap<HTMLElement, number>();
@@ -75,7 +75,7 @@ export function attachMapVideo(root: HTMLElement, video: HTMLVideoElement, conta
       if (disposed || media.matches) return;
       if (failed || video.readyState < 2 || !Number.isFinite(video.duration)) { fail(); return; }
       staticMode = false; playing = true; clearTimers(); container.dataset.videoState = 'ready';
-      video.playbackRate = 1;
+      video.playbackRate = video.duration / (mapVideo.zoomDurationMs / 1000);
       void video.play().catch(fail);
     },
     static() { staticMode = true; playing = false; clearTimers(); video.pause(); container.dataset.videoState = 'static'; },
