@@ -20,12 +20,13 @@ try{
   await page.waitForTimeout(1600);
   const mid=await page.evaluate(()=>({u:Number(document.querySelector('#invitation').dataset.mapProgress),time:document.querySelector('video').currentTime,paused:document.querySelector('video').paused}));
   assert(mid.u>.15&&mid.u<.75,'Zoom advances without scrolling');assert(mid.time>0&&!mid.paused,'Video plays rather than seeking every frame');
+  assert.equal(await page.locator('video').evaluate(v=>v.playbackRate),1,'Original 6.4-second clip plays at native speed');
   await page.waitForFunction(()=>Number(document.querySelector('#invitation').dataset.mapProgress)===1,null,{timeout:mapVideo.revealDurationMs});
   assert.equal(await page.evaluate(()=>scrollY),y,'Never scroll the page automatically');
   // Normalize to timeline progress, so a busy headless decoder skipping
   // presentation frames does not masquerade as a discontinuous heart curve.
   const largestStep=await page.evaluate(duration=>{const frames=window.__mapHeartFrames;let largest=0;for(let j=1;j<frames.length;j++){const a=frames[j-1],b=frames[j];if(a.scroll!==b.scroll||a.u<.01||b.u<=a.u)continue;for(let i=0;i<2;i++)largest=Math.max(largest,Math.hypot(b.pair[i].x-a.pair[i].x,b.pair[i].y-a.pair[i].y)*(16.67/duration)/(b.u-a.u));}return largest;},mapVideo.revealDurationMs);
-  assert(largestStep<12,'Restrained continuous heart curve during the five-second zoom: '+largestStep);
+  assert(largestStep<12,'Restrained continuous heart curve during the native-speed zoom: '+largestStep);
   assert(await page.locator('[data-map-note]').isVisible());
   assert(await page.evaluate(()=>{const note=document.querySelector('[data-map-note]').getBoundingClientRect(),pin=document.querySelector('.venue-pin').getBoundingClientRect();return note.bottom<pin.top;}),'Venue paper is above its pin');
   assert.equal(new URL(await page.locator('.directions').getAttribute('href')).searchParams.get('destination'),'40.7603888,29.7847177');
@@ -49,5 +50,5 @@ try{
  }
  const context=await browser.newContext({reducedMotion:'reduce'}),page=await context.newPage();await page.goto(base);await page.locator('[data-map-video]').scrollIntoViewIfNeeded();
  assert.equal(await page.locator('video').getAttribute('src'),null);assert(await page.locator('[data-map-note]').isVisible());await context.close();
- console.log('Automatic map checks passed: five-second playback, short section, no page scrolling/replay, directions, pin placement, blocked/pending/rejected/fast and reduced-motion fallbacks.');
+ console.log('Automatic map checks passed: native-speed 6.4-second playback, short section, no page scrolling/replay, directions, pin placement, blocked/pending/rejected/fast and reduced-motion fallbacks.');
 }finally{await browser.close();}
