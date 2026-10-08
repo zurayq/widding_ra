@@ -4,9 +4,9 @@ import {useLocale} from './LocaleProvider';
 import styles from './InvitationAudio.module.css';
 type Status='idle'|'playing'|'paused'|'blocked'|'ended'|'error';
 const labels={
- en:{play:'Play invitation audio',pause:'Pause invitation audio',blocked:'Tap for sound',error:'Retry audio',prompt:'Press me'},
- tr:{play:'Davetiyenin sesini aç',pause:'Davetiyenin sesini duraklat',blocked:'Ses için dokun',error:'Sesi yeniden dene',prompt:'Bana dokun'},
- ar:{play:'تشغيل صوت الدعوة',pause:'إيقاف صوت الدعوة مؤقتًا',blocked:'اضغط للصوت',error:'إعادة محاولة تشغيل الصوت',prompt:'اضغط هنا'},
+ en:{play:'Play invitation audio',pause:'Pause invitation audio',blocked:'Tap for sound',error:'Retry audio'},
+ tr:{play:'Davetiyenin sesini aç',pause:'Davetiyenin sesini duraklat',blocked:'Ses için dokun',error:'Sesi yeniden dene'},
+ ar:{play:'تشغيل صوت الدعوة',pause:'إيقاف صوت الدعوة مؤقتًا',blocked:'اضغط للصوت',error:'إعادة محاولة تشغيل الصوت'},
 };
 export function InvitationAudio(){
  const {locale}=useLocale(),copy=labels[locale];
@@ -35,9 +35,8 @@ export function InvitationAudio(){
     {/* eslint-disable-next-line @next/next/no-img-element */}
     <img src="/assets/music-note.webp" width={240} height={200} alt="" aria-hidden="true" onError={()=>setArtFailed(true)}/>
    </>}
-   {playing&&<span className={styles.pauseMark} aria-hidden="true">Ⅱ</span>}
+   {!playing&&<svg className={styles.slash} data-audio-off viewBox="0 0 48 48" aria-hidden="true"><path className={styles.slashPaper} d="M10 38 38 10"/><path d="M10 38 38 10"/></svg>}
   </button>
-  {!playing&&status!=='error'&&<div className={styles.hint} data-audio-hint aria-hidden="true"><span dir={locale==='ar'?'rtl':'ltr'}>{copy.prompt}</span><svg viewBox="0 0 58 40"><path d="M5 4C9 19 21 31 48 30M41 22l9 8-11 5"/></svg></div>}
   <span className={styles.status} role="status">{status==='blocked'?copy.blocked:status==='error'?copy.error:''}</span>
  </div>;
 }
