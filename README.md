@@ -51,3 +51,7 @@ The venue keepsake uses `public/assets/venue-keepsake.webp`: transparent deckled
 ## Skyline ending
 
 The approved Algiers/Jerusalem-inspired keepsake is `public/assets/skyline-keepsake.webp` (1000×500, transparent). Its baked lettering and hearts were removed, leaving the gold paper architecture and rose. The existing two travelling hearts settle in the centre gap; the EN/TR closing heading is real text and flows at enlarged sizes. The tiny URAR Space credit has a 44px hit target and opens `mailto:studio@zurayq.lol`, as supplied. It is an email link, not an invented website URL. The skyline reserves its aspect ratio and loads lazily. No additional heart animation or controller is introduced.
+
+## Verse keepsake
+
+The verse uses the approved gold-edged cream paper and pressed golden flower artwork at `/assets/verse-keepsake.webp` (1000×563, transparent). Baked calligraphy was removed; Noto Naskh Arabic renders the exact vocalized excerpt in two natural block lines from `wedding.verseLines`, RTL with `lang="ar"`. Text grows and wraps with system text size; paper height follows it. The excerpt stays readable when images fail and with no JS/reduced motion. Existing shared dance and text clearance adapt to the section geometry.

@@ -1,3 +1,4 @@
+const verseLines=['وَجَعَلْنَاكُمْ شُعُوبًا','وَقَبَائِلَ لِتَعَارَفُوا'];
 export const wedding = {
   names: { bride: 'Raghed', groom: 'Amir' },
   dateISO: '2026-10-17T15:00:00+03:00', timezone: 'Europe/Istanbul',
@@ -5,7 +6,7 @@ export const wedding = {
   city: 'Körfez', region: 'Kocaeli', country: 'Türkiye',
   venueName: 'Tütünçiftlik Kültür Merkezi', address: '', latitude: '40.7603888', longitude: '29.7847177',
   placeUrl: 'https://www.google.com/maps/place/T%C3%BCt%C3%BCn%C3%A7iftlik+Cultural+Center/@40.7603928,29.7821428,628m/data=!3m2!1e3!4b1!4m6!3m5!1s0x14cb389cb5498c6d:0x13f7f8fa75999222!8m2!3d40.7603888!4d29.7847177!16s%2Fg%2F11c0vqbxpq?entry=ttu',
-  verse: 'وجعلناكم شعوبًا وقبائل لتعارفوا', useVerseArtwork: false,
+  verse: verseLines.join(' '), verseLines, useVerseArtwork: false,
 };
 export type VenueData = Pick<typeof wedding, 'venueName' | 'address' | 'latitude' | 'longitude' | 'city' | 'region' | 'country'>;
 export function buildDirectionsUrl(venue: VenueData = wedding): string {

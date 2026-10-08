@@ -22,6 +22,8 @@ assert.equal(keepsakeMeta.width,800);assert.equal(keepsakeMeta.height,887);asser
 const skyline=sharp('public/assets/skyline-keepsake.webp');
 await skyline.raw().toBuffer();
 const skylineMeta=await skyline.metadata();assert.equal(skylineMeta.width,1000);assert.equal(skylineMeta.height,500);assert(skylineMeta.hasAlpha,'Skyline has transparent surroundings');
+const verse=sharp('public/assets/verse-keepsake.webp');await verse.raw().toBuffer();
+const verseMeta=await verse.metadata();assert.equal(verseMeta.width,1000);assert.equal(verseMeta.height,563);assert(verseMeta.hasAlpha,'Verse paper has transparent edges');
 const video=await readFile('public/assets/map-zoom.mp4');
 assert.equal(video.toString('ascii',4,8),'ftyp','Map video has a valid MP4 file-type box');
 assert(video.indexOf(Buffer.from('moov'))<video.indexOf(Buffer.from('mdat')),'Map video metadata precedes media for fast loading');

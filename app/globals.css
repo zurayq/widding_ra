@@ -48,3 +48,12 @@ body{font-family:var(--font-serif),Georgia,serif;background:radial-gradient(elli
 .resting-place{position:relative;height:1px;margin-top:30px;left:0;right:0}
 .wordmark{display:flex;align-items:center;justify-content:center;width:fit-content;min-height:44px;margin:16px auto 0;padding:0 12px;font-size:.625rem;line-height:1.5;letter-spacing:.04em;color:#705b3f;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
 @media(max-width:350px){.closing-copy h2{font-size:1.25rem}}
+
+/* Cream-and-gold keepsake with real Arabic lettering. */
+.verse-scene{padding:32px 14px 48px}
+.verse-keepsake{position:relative;isolation:isolate;min-height:210px;filter:drop-shadow(0 5px 5px #795f3020)}
+.verse-keepsake:before{content:'';position:absolute;inset:9% 3% 10%;z-index:-1;background:#f7eedb;border-radius:12px}
+.verse-paper-art{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:0}
+.verse-keepsake .verse-text{position:relative;z-index:1;max-width:none;margin:0;padding:19% 16% 21% 26%;font-family:var(--font-arabic),serif;font-size:1.625rem;line-height:1.85;color:#65451f;text-align:center}
+.verse-text span{display:block;overflow-wrap:normal}
+@media(max-width:350px){.verse-keepsake{min-height:190px}.verse-keepsake .verse-text{font-size:1.375rem}}

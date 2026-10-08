@@ -31,7 +31,14 @@ export default function Page(){
     </section>
     <section className="verse-scene scene" data-scene="verse" aria-label={copy.verseLabel}>
       <StoryDecorations area="story"/>
-      <div className="verse-composition" data-reveal="verse"><Flourish/>{wedding.useVerseArtwork?<Artwork id="quran_verse" alt={copy.alt.verse}/>:<p className="verse-text" dir="rtl" lang="ar">{wedding.verse}</p>}<Flourish/></div>
+      <div className="verse-composition" data-reveal="verse">
+        {wedding.useVerseArtwork?<Artwork id="quran_verse" alt={copy.alt.verse}/>:<div className="verse-keepsake">
+          {/* Letter-free artwork; Arabic remains selectable and readable without images. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="verse-paper-art" src="/assets/verse-keepsake.webp" width={1000} height={563} alt="" aria-hidden="true" loading="lazy"/>
+          <p className="verse-text" dir="rtl" lang="ar">{wedding.verseLines.map((line,index)=><span key={line}>{line}{index===0?' ':''}</span>)}</p>
+        </div>}
+      </div>
     </section>
     <section className="portrait-scene childhood-scene scene" data-scene="childhood" aria-label={copy.alt.childhoodComposition}>
       <StoryDecorations area="childhood"/>

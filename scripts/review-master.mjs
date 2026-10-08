@@ -18,6 +18,7 @@ try{
   await page.goto(base+'/?inspect=1');await ready(page);
   check(await page.locator('.traveller').count()===2,'Exactly two main hearts');check(await page.locator('.locale-switch').count()===0,'No visible language switch');
   check(await page.locator('[data-route]').count()===1,'Exactly one shared trail');check(await page.locator('.directions').count()===1,'Configured destination enables directions');check(await page.locator('.landmark').count()===0,'Unfinished skylines hidden');
+  check(await page.locator('.verse-text').getAttribute('dir')==='rtl'&&await page.locator('.verse-text').getAttribute('lang')==='ar','Arabic keeps correct direction and language');
   check(await page.locator('.wordmark').textContent()==='URAR Space','Studio credit uses the approved name');
   check(await page.locator('.wordmark').getAttribute('href')==='mailto:studio@zurayq.lol','Studio credit opens the supplied email');
   const initialRequests=await page.evaluate(()=>performance.getEntriesByType('resource').filter(r=>r.name.includes('/assets/')).map(r=>r.name));
@@ -41,9 +42,10 @@ try{
   check(math.minSeparation>19,'Main hearts remain distinct at '+width);check(math.jump<.65,'Restrained per-scroll movement at '+width);
   check(await page.evaluate(()=>{const m=window.__weddingMotion,p=m.sample(m.geometry.maxScroll);return Math.abs(p.route.x-m.geometry.width/2)<1;}),'Final pair rests at centre '+width);
   await page.screenshot({path:output+'/opening-'+width+'.png'});
-  for(const [name,y]of [['childhood',geometry.childhood.y-140],['adult',geometry.adult.y-130],['countdown',geometry.countdown.y-120],['city',geometry.map.y+1050],['rest',geometry.maxScroll]]){await move(page,y);await page.screenshot({path:output+'/'+name+'-'+width+'.png'});}
+  for(const [name,y]of [['verse',geometry.verse.y-180],['childhood',geometry.childhood.y-140],['adult',geometry.adult.y-130],['countdown',geometry.countdown.y-120],['city',geometry.map.y+1050],['rest',geometry.maxScroll]]){await move(page,y);await page.screenshot({path:output+'/'+name+'-'+width+'.png'});}
   const local=await page.evaluate(()=>[...document.querySelectorAll('[data-decoration]')].map(el=>{const b=el.getBoundingClientRect(),parent=el.closest('section').getBoundingClientRect();return{x:b.x-parent.x,y:b.y-parent.y,width:b.width,height:b.height,parentWidth:parent.width,parentHeight:parent.height,transform:el.style.transform};}));
   check(local.every(b=>b.x>=-1&&b.y>=-1&&b.x+b.width<=b.parentWidth+1&&b.y+b.height<=b.parentHeight+1),'Decorations stay inside their own sections '+width);
+  check(await page.locator('.verse-paper-art').evaluate(async image=>{await image.decode();return image.naturalWidth===1000&&image.naturalHeight===563;}),'Pressed-flower verse artwork decodes at '+width);
   check(await page.locator('.skyline-art').evaluate(async image=>{await image.decode();return image.naturalWidth===1000&&image.naturalHeight===500;}),'Approved skyline decodes at '+width);
   check(await page.evaluate(()=>{const m=window.__weddingMotion,p=m.sample(m.geometry.maxScroll),b=document.querySelector('.resting-place').getBoundingClientRect();return Math.abs(p.route.y-(b.y+scrollY))<1;}),'Pair settles into the skyline anchor '+width);
   await move(page,geometry.countdown.y-160);const saved=await snapshot(page);await page.waitForTimeout(250);assert.deepEqual(await snapshot(page),saved,'Stopped story freezes');
@@ -76,6 +78,9 @@ try{
   const overflow=await page.evaluate(()=>({page:document.documentElement.scrollWidth>innerWidth,captions:[...document.querySelectorAll('[data-portrait-caption]')].some(e=>e.scrollWidth>e.clientWidth+1)}));
   check(!overflow.page&&!overflow.captions,'200% text wraps without horizontal clipping '+expected);
   await page.screenshot({path:output+'/enlarged-'+expected+'.png'});
+  const verseG=await page.evaluate(()=>window.__weddingMotion.geometry);await move(page,verseG.verse.y-100);
+  check(await page.locator('.verse-text').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'Enlarged Arabic fits the paper');
+  await page.screenshot({path:output+'/enlarged-verse-'+expected+'.png'});
   const enlarged=await page.evaluate(()=>window.__weddingMotion.geometry);await move(page,enlarged.countdown.y-30);
   const counterOverlap=await page.evaluate(()=>{const boxes=[...document.querySelectorAll('.countdown-grid span,.countdown-grid small')].map(el=>{const range=document.createRange();range.selectNodeContents(el);return range.getBoundingClientRect();});return boxes.some((a,i)=>boxes.some((b,j)=>j>i&&a.right>b.left+1&&a.left<b.right-1&&a.bottom>b.top+1&&a.top<b.bottom-1));});
   check(!counterOverlap,'Enlarged countdown digits/labels do not overlap '+expected);

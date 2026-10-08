@@ -47,3 +47,7 @@ The four legacy map WebPs above remain source references. The live stage uses th
 ## Joined skyline footer
 
 `skyline-keepsake.webp` (1000×500, WebP quality 92, full alpha) preserves the approved cream/champagne paper-relief Algiers/Jerusalem-inspired architecture and rose. Empty paper background, all text and the two baked hearts were removed with image editing. `app/page.tsx` supplies translated live lettering and the email credit; the existing choreography reads the responsive centre resting anchor. Legacy separate landmark placeholders remain disabled.
+
+## Verse paper artwork
+
+`verse-keepsake.webp` (1000×563, WebP quality 92, full alpha) is the approved gold-edged cream slip with pressed golden flowers, dried buds and small paper-tape accents. Exterior backdrop and all baked calligraphy were removed through image editing; the central textured paper remains blank for live Arabic. Its source is a generated letter-free variant of the approved preview.
