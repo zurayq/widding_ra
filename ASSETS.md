@@ -39,3 +39,7 @@ The four legacy map WebPs above remain source references. The live stage uses th
 `public/share-preview.jpg` and `app/opengraph-image.png` provide the 1200×630 share composition. `app/icon.svg` and `app/favicon.ico` provide icons. `scripts/create-share-image.mjs` regenerates them. Lora and Noto Naskh Arabic, with their OFL licenses, live in `app/fonts/` and load through `next/font/local`.
 
 `algerian_landmark`, `palestinian_landmark` and `quran_verse` are disabled optional registry roles with no supplied source filename. Unfinished skylines are hidden; live Arabic is displayed. Real optional artwork requires an exact source, dimensions, normalized useful bounds and enabled configuration. No existing skyline/calligraphy file is falsely claimed.
+
+## Venue keepsake
+
+`public/assets/venue-keepsake.webp` (800×887, WebP quality 90, full alpha) is the approved paper-and-ink card artwork with lettering removed. The decorative coastal illustration, brown rose and hollow heart remain; all venue/date/time/directions text is real localized HTML. The card uses the supplied Tütünçiftlik venue link and real coordinates in `lib/content.ts`; the painted mini-map is decorative. The public image has transparent edges and a readable cream fallback.

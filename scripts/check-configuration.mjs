@@ -5,7 +5,9 @@ import { selectLocale, selectLocaleFromAcceptLanguage, formatWeddingDate, format
 
 assert.equal(wedding.dateISO, '2026-10-17T15:00:00+03:00');
 assert.equal(wedding.timezone, 'Europe/Istanbul');
-assert.equal(wedding.city, 'İzmit');
+assert.equal(wedding.city, 'Körfez');
+assert.equal(wedding.venueName, 'Tütünçiftlik Kültür Merkezi');
+assert(wedding.placeUrl.includes('!3d40.7603888!4d29.7847177'));
 assert.deepEqual(new Set(Object.values(wedding.names)), new Set(['Amir', 'Raghed']));
 const target = Date.parse(wedding.dateISO);
 assert.deepEqual(getTimeRemaining(wedding.dateISO, target - 90061000), { days: 1, hours: 1, minutes: 1, seconds: 1 });
@@ -15,7 +17,7 @@ assert.equal(getTimeRemaining('2026-10-17T15:00:00', target), null);
 assert.equal(getTimeRemaining('invalid', target), null);
 const unset = { venueName: '', address: '', latitude: '', longitude: '', city: 'İzmit', region: 'Kocaeli', country: 'Türkiye' };
 assert.equal(buildDirectionsUrl(unset), '', 'A city alone must never enable venue directions');
-assert.equal(new URL(buildDirectionsUrl()).searchParams.get('destination'),'40.7583737692164,29.796404809521622','Directions use the supplied real coordinates');
+assert.equal(new URL(buildDirectionsUrl()).searchParams.get('destination'),'40.7603888,29.7847177','Directions use the supplied real coordinates');
 assert.equal(buildDirectionsUrl({ ...unset, venueName: 'Unverified venue label' }), '');
 assert.equal(new URL(buildDirectionsUrl({ ...unset, latitude: '0', longitude: '0' })).searchParams.get('destination'), '0,0');
 assert.equal(buildDirectionsUrl({ ...unset, latitude: '91', longitude: '1' }), '');

@@ -26,7 +26,7 @@ try{
   await page.evaluate(()=>{const g=window.__weddingMotion.geometry;for(const u of [.2,.9,.1,.8])scrollTo(0,g.map.y+u*(g.map.height-g.pinHeight));});
   await seek(page,.8);
   await seek(page,1);await page.screenshot({path:'.verification/video/final-'+width+'.png'});
-  const destination=await page.locator('.directions').getAttribute('href');assert.equal(new URL(destination).searchParams.get('destination'),'40.7583737692164,29.796404809521622');
+  const destination=await page.locator('.directions').getAttribute('href');assert.equal(new URL(destination).searchParams.get('destination'),'40.7603888,29.7847177');
   assert(await page.evaluate(()=>{const pin=document.querySelector('.venue-pin').getBoundingClientRect(),note=document.querySelector('[data-map-note]').getBoundingClientRect();return note.bottom<pin.top;}),'Paper sits above the destination pin');
   assert.deepEqual(errors,[]);await context.close();
  }

@@ -3,7 +3,7 @@ import { mapVideo } from './map-video-config';
 type Point = { x: number; y: number };
 export const mapCameraConfig = {
   scrollDistance: 1100, arrival: mapVideo.arrival,
-  noteStart: .82, noteEnd: .95,
+  noteStart: .82, noteEnd: .95, destinationY: .85,
 };
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 const ease = (v: number) => { const t = clamp(v); return t*t*(3-2*t); };
@@ -52,12 +52,12 @@ export function sampleMapCamera(u: number, width: number, height: number): MapCa
   const anchor = videoAnchor(u);
   const fit = Math.max(width/mapVideo.width, height/mapVideo.height);
   const amount = between(u,.69,mapCameraConfig.arrival);
-  // Preserve the established pin/card position while following the new clip.
-  const finalScale = .6386/videoAnchor(1).y;
+  // Leave room for the illustrated paper above the tracked shore pin.
+  const finalScale = mapCameraConfig.destinationY/videoAnchor(1).y;
   const scale = mix(1,finalScale,amount);
   const sw = mapVideo.width*fit, sh = mapVideo.height*fit;
   const x = clamp(width*.5-sw*scale*anchor.x,width-sw*scale,0);
-  const y = clamp(height*mix(.42,.6386,amount)-sh*scale*anchor.y,height-sh*scale,0);
+  const y = clamp(height*mix(.42,mapCameraConfig.destinationY,amount)-sh*scale*anchor.y,height-sh*scale,0);
   return [{width:sw,height:sh,x,y,scale,opacity:1}];
 }
 
@@ -82,8 +82,8 @@ export function configureMapGeometry(root: HTMLElement, viewportHeight=window.in
   const note = section?.querySelector<HTMLElement>('[data-map-note]');
   if (!section || !pin || !frame || !note) throw new Error('Map stage is incomplete');
   const frameTop=frame.offsetTop;
-  const pinHeight = Math.max(Math.min(650, viewportHeight),frameTop+260+35);
-  const frameHeight = Math.min(480, Math.max(260, pinHeight-frameTop-35));
+  const pinHeight = Math.max(Math.min(740, viewportHeight),frameTop+260+35);
+  const frameHeight = Math.min(580, Math.max(260, pinHeight-frameTop-35));
   section.style.setProperty('--map-pin-height', pinHeight+'px');
   section.style.setProperty('--map-frame-height', frameHeight+'px');
   section.style.setProperty('--map-note-max-height',Math.max(110,cameraAnchor(1,frame.clientWidth,frameHeight).y-60)+'px');

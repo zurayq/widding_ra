@@ -15,6 +15,10 @@ for(const asset of Object.values(assets)){
 for(const name of ['map-zoom-start.webp','map-zoom-end.webp']){
  const image=sharp('public/assets/'+name);await image.raw().toBuffer();const m=await image.metadata();assert.equal(m.width,mapVideo.width);assert.equal(m.height,mapVideo.height);
 }
+const keepsake=sharp('public/assets/venue-keepsake.webp');
+await keepsake.raw().toBuffer();
+const keepsakeMeta=await keepsake.metadata();
+assert.equal(keepsakeMeta.width,800);assert.equal(keepsakeMeta.height,887);assert(keepsakeMeta.hasAlpha,'Venue paper has transparent edges');
 const video=await readFile('public/assets/map-zoom.mp4');
 assert.equal(video.toString('ascii',4,8),'ftyp','Map video has a valid MP4 file-type box');
 assert(video.indexOf(Buffer.from('moov'))<video.indexOf(Buffer.from('mdat')),'Map video metadata precedes media for fast loading');

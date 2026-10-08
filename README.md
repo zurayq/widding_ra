@@ -10,7 +10,7 @@ A warm, narrow paper invitation with two persistent dancing hearts, one reversib
 
 ## Wedding, languages and metadata
 
-Edit `lib/content.ts`: Amir and Raghed; **17 October 2026, 15:00, Europe/Istanbul**; İzmit, Kocaeli, Türkiye. Directions now use the supplied coordinates **40.7583737692164, 29.796404809521622**. Exact venue name/address remain unset; the card uses the city and region as its title. Illustration anchors never supply real directions.
+Edit `lib/content.ts`: Amir and Raghed; **17 October 2026, 15:00, Europe/Istanbul**; Tütünçiftlik Kültür Merkezi, Körfez, Kocaeli, Türkiye. Directions use the supplied place coordinates **40.7603888, 29.7847177**. The venue title opens the supplied Google Maps place; the directions link opens navigation to those coordinates. No street address is invented. Illustration anchors never supply real directions.
 
 The countdown shows remaining time before the target, celebration from the target until the end of 17 October in Istanbul, then a warm thank-you message from 18 October onward. It checks local calendar dates, updates once per second before the event, schedules the wedding-day midnight transition, and stops in the final state. Screen readers are not notified every second.
 
@@ -44,4 +44,6 @@ Run `node scripts/review-video.mjs` against the running site for actual browser 
 
 Browser reports/screenshots: `.verification/refinement/`. The review covers 320/390/430/1440px, landscape, fresh asset decoding and reload, deterministic forward/reverse/stopped/rapid travel, readable-content clearance, one route, local decoration bounds, height-only stability, language preferences and ignored manual state, 200% text, countdown states/midnight, reduced motion, no-JS and genuine image/motion failures. The same browser review can run against a production server via `INVITATION_REVIEW_URL`.
 
-These are desktop-browser simulations, **not physical-phone tests**. Exact-case validation supports Linux deployment, but an actual deployed Linux host has not been tested here. Remaining input: a real venue name/address, if desired. Real skyline/calligraphy artwork is optional; live Arabic already works.
+These are desktop-browser simulations, **not physical-phone tests**. Exact-case validation supports Linux deployment, but an actual deployed Linux host has not been tested here. The venue is configured; a street address can be added if desired. Real skyline/calligraphy artwork is optional; live Arabic already works.
+
+The venue keepsake uses `public/assets/venue-keepsake.webp`: transparent deckled paper, an illustrated coast, brown ink rose and hollow heart. Its lettering is native EN/TR HTML, including the date, time and two accessible Google Maps links. Failed artwork retains a cream paper fallback with the same usable details. `node scripts/review-venue.mjs` checks both languages at 320/390px, decoding, correct links and card placement.
