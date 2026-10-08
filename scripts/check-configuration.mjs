@@ -45,6 +45,16 @@ console.log('Wedding timestamp, names, venue guard, countdown, locale preference
 assert.equal(selectLocaleFromAcceptLanguage('ar-DZ,tr;q=0.8,en;q=0.5'),'ar');
 assert.deepEqual(Object.keys(translations.en).sort(),Object.keys(translations.ar).sort());
 assert.deepEqual(Object.keys(translations.en.alt).sort(),Object.keys(translations.ar.alt).sort());
+assert.equal(translations.en.titleFirst+' '+translations.en.titleSecond,'You’re invited');
+assert.equal(translations.en.subtitle,'to celebrate our wedding.');
+assert.equal(translations.en.invitation,'Our story','Do not repeat the opening invitation above the portraits');
+for(const copy of Object.values(translations)){
+ assert.equal(copy.childhood.split('\n').length,3,'Childhood copy fits three paper lines');
+ assert.equal(copy.adult.split('\n').length,2,'Adult copy fits two paper lines');
+ assert(copy.invitationTitle.length>0,'Share title is localized');
+ assert(!/weekend|October|15:00|3 p\.m\./i.test(copy.subtitle),'Opening subtitle has no date or time');
+}
+assert.deepEqual(wedding.verseLines,['وَجَعَلْنَاكُمْ شُعُوبًا','وَقَبَائِلَ لِتَعَارَفُوا'],'Copy edits preserve the exact supplied verse');
 import {weddingCalendar} from '../lib/calendar.ts';
 const calendar=weddingCalendar(wedding,buildDirectionsUrl()),unfolded=calendar.replace(/\r\n /g,'');
 assert(unfolded.includes('DTSTART:20261017T120000Z\r\n'));

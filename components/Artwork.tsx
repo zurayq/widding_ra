@@ -34,7 +34,7 @@ function Preview({ kind }: { kind: typeof assets[AssetId]['fallback'] }) {
     </g>
     <g fill="#c2ad80" opacity=".4">{Array.from({length:24},(_,i)=><rect key={i} x={850 + (i%8)*66} y={240+Math.floor(i/8)*58} width={27+i%3*9} height={18+i%4*5} rx="4" transform={'rotate(-10 ' + (864+(i%8)*66) + ' ' + (249+Math.floor(i/8)*58) + ')'}/>)}</g>
     <path d="M1160 620Q1410 550 1530 598" stroke="#e6ece5" strokeWidth="5" fill="none"/>
-    <g fill="#746446" fontFamily="Georgia,serif" textAnchor="middle"><text x="535" y="494" fontSize="33" fontStyle="italic" fill="#788d87">{copy.marmaraSea}</text><text x="1144" y="352" fontSize="35" letterSpacing="8">İZMİT</text><text x="915" y="157" fontSize="24" letterSpacing="10" opacity=".7">KOCAELİ</text></g>
+    <g fill="#746446" fontFamily="Georgia,serif" textAnchor="middle"><text x="535" y="494" fontSize="33" fontStyle="italic" fill="#788d87">{copy.marmaraSea}</text><text x="1144" y="352" fontSize="35" letterSpacing="8">{wedding.city.toLocaleUpperCase('tr-TR')}</text><text x="915" y="157" fontSize="24" letterSpacing="10" opacity=".7">KOCAELİ</text></g>
     <circle cx="1120" cy="414" r="11" fill="#a1814f"/><circle cx="1120" cy="414" r="25" fill="none" stroke="#a1814f" opacity=".3" strokeWidth="2"/>
   </svg>;
   if (kind === 'pattern') return <svg viewBox="0 0 180 1200" aria-hidden="true"><g fill="none" stroke="#b69c6b" strokeWidth="3" opacity=".45">{Array.from({length:12},(_,i)=><g key={i} transform={'translate(90 ' + (50+i*100) + ')'}><path d="M0-36L30 0L0 36L-30 0Z"/><path d="M0-16L14 0L0 16L-14 0Z"/><path d="M-58-45V45M58-45V45"/></g>)}</g></svg>;

@@ -105,7 +105,7 @@ try{
   const context=await browser.newContext();const page=await context.newPage();await page.clock.install({time:new Date(now)});await page.goto(base);
   await page.locator(state==='before'?'.countdown-grid':'[data-countdown-state="'+state+'"]').waitFor({state:'attached'});
   check(state==='before'?await page.locator('.countdown-grid').count()===1:await page.locator('[data-countdown-state="'+state+'"]').count()===1,'Countdown state '+now);
-  check((await page.locator('.countdown-paper h2').textContent())===(state==='before'?'Until the special day':state==='celebration'?'Our wedding day':'With love and gratitude'),'Correct countdown heading '+state);
+  check((await page.locator('.countdown-paper h2').textContent())===(state==='before'?'Until our wedding':state==='celebration'?'Our wedding day':'With love and gratitude'),'Correct countdown heading '+state);
   if(now.includes('23:59:59')){await page.clock.runFor(2000);check(await page.locator('[data-countdown-state="thanks"]').count()===1,'Wedding-day midnight transitions to thanks');}
   report.clock.push({now,state});await context.close();
  }

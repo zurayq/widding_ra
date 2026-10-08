@@ -19,8 +19,8 @@ export default function Page(){
       <div className="story-pattern story-pattern-right"><TraditionalBorder country="palestine"/></div>
     </div>
     <StoryMotion/>
-    <section className="opening scene" data-scene="opening" aria-label={copy.intro}>
-      <div className="opening-heading"><p className="eyebrow">{copy.intro}</p><h1>{copy.titleFirst}<br/><em>{copy.titleSecond}</em></h1><p className="intro-subtitle">{copy.subtitle}</p></div>
+    <section className="opening scene" data-scene="opening" aria-label={copy.invitationTitle}>
+      <div className="opening-heading"><p className="eyebrow">{copy.intro}</p><h1>{copy.titleFirst}{' '}<br/><em>{copy.titleSecond}</em></h1><p className="intro-subtitle">{copy.subtitle}</p></div>
       <div className="origin-composition">
         <div className="edge-pattern edge-left"><TraditionalBorder country="algeria"/></div>
         <div className="edge-pattern edge-right"><TraditionalBorder country="palestine"/></div>

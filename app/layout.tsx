@@ -1,7 +1,7 @@
 import './globals.css';
 import { LocaleProvider } from '../components/LocaleProvider';
 import { getInitialLocale } from '../lib/locale-server';
-import { formatWeddingDate } from '../lib/i18n';
+import { formatWeddingDate, translations } from '../lib/i18n';
 import { wedding } from '../lib/content';
 import localFont from 'next/font/local';
 import type {Metadata,Viewport} from 'next';
@@ -11,8 +11,8 @@ const arabic=localFont({src:'./fonts/noto-naskh-arabic.ttf',variable:'--font-ara
 export const viewport:Viewport={themeColor:'#fbf8f0'};
 
 export async function generateMetadata():Promise<Metadata> {
-  const locale=await getInitialLocale(),names=wedding.names.groom+' & '+wedding.names.bride;
-  const title=names+' — Wedding invitation',description=names+' · '+formatWeddingDate(locale,wedding.dateISO,wedding.timezone)+' · '+wedding.city+', '+wedding.country;
+  const locale=await getInitialLocale(),copy=translations[locale],names=wedding.names.groom+' & '+wedding.names.bride;
+  const title=copy.intro+' — '+copy.invitationTitle,description=copy.titleFirst+' '+copy.titleSecond+' · '+copy.intro+' · '+formatWeddingDate(locale,wedding.dateISO,wedding.timezone)+' · '+copy.mapCaption;
   const configured=process.env.NEXT_PUBLIC_SITE_URL;
   const request=await headers(),host=request.get('x-forwarded-host')||request.get('host');
   const protocol=request.get('x-forwarded-proto')?.split(',')[0]||(host&&/^(localhost|127\.0\.0\.1)(:|$)/.test(host)?'http':undefined);
