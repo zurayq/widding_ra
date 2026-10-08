@@ -57,3 +57,27 @@ body{font-family:var(--font-serif),Georgia,serif;background:radial-gradient(elli
 .verse-keepsake .verse-text{position:relative;z-index:1;max-width:none;margin:0;padding:19% 16% 21% 26%;font-family:var(--font-arabic),serif;font-size:1.625rem;line-height:1.85;color:#65451f;text-align:center}
 .verse-text span{display:block;overflow-wrap:normal}
 @media(max-width:350px){.verse-keepsake{min-height:190px}.verse-keepsake .verse-text{font-size:1.375rem}}
+/* Approved countdown keepsake: artwork frames live, localized numbers. */
+.countdown-card{width:calc(100% - 42px);filter:drop-shadow(0 5px 7px #795f3018)}
+.countdown-paper{position:relative;isolation:isolate;padding:max(29%,7rem) 10% 10% 14%;min-height:430px;background:none;clip-path:none}
+.countdown-paper:before{content:'';position:absolute;inset:15% 6% 4%;z-index:-1;background:#f7eedb;border-radius:8px}
+.countdown-paper-art{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:0}
+.countdown-content{position:relative;z-index:1}
+.countdown-paper h2{font-size:1.5rem;line-height:1.35;margin:14px 0 20px;min-height:0;text-wrap:balance}
+.countdown-grid span{font-size:2rem}.countdown-grid small{font-size:.75rem;line-height:1.5}
+.countdown-paper .flourish{margin:22px 0 20px}
+.eyebrow,.scroll-invitation span,.origin figcaption,.closing-copy p{font-size:.8125rem}
+@media(max-width:350px){.countdown-paper{padding:max(30%,7rem) 9% 11% 13%}.countdown-paper h2{font-size:1.375rem}.countdown-grid span{font-size:1.75rem}.countdown-grid small,.scroll-invitation span{font-size:.75rem}}
+
+.calendar-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;margin-top:8px;padding:5px 8px;font-size:.8125rem;color:#694d2b;text-underline-offset:4px;text-decoration-color:#a58a60}
+.calendar-link:focus-visible{outline:2px solid #786448;outline-offset:3px;border-radius:3px}
+html[lang="ar"] .eyebrow,html[lang="ar"] h1,html[lang="ar"] h2,html[lang="ar"] h3,html[lang="ar"] .intro-subtitle,html[lang="ar"] .portrait-caption,html[lang="ar"] .invitation-copy,html[lang="ar"] .ending-line,html[lang="ar"] .closing-copy p,html[lang="ar"] .scroll-invitation,html[lang="ar"] .countdown-content,html[lang="ar"] .map-scene{font-family:var(--font-arabic),serif;letter-spacing:0}
+html[lang="ar"] .eyebrow,html[lang="ar"] h1,html[lang="ar"] h2,html[lang="ar"] .intro-subtitle,html[lang="ar"] .invitation-copy,html[lang="ar"] .portrait-caption,html[lang="ar"] .ending-line,html[lang="ar"] .celebration,html[lang="ar"] .wedding-date,html[lang="ar"] .calendar-link{direction:rtl;unicode-bidi:plaintext}
+html[lang="ar"] .countdown-grid{direction:ltr}html[lang="ar"] .countdown-paper h2{line-height:1.6}
+html[lang="ar"] .portrait-caption{font-style:normal}
+
+.traveller-group{mix-blend-mode:multiply}.traveller .artwork{transform-origin:50% 50%}
+
+html[lang="ar"] .countdown-grid small{font-family:var(--font-arabic),serif;letter-spacing:0;font-size:.8125rem}
+.countdown-grid span{font-family:var(--font-serif),Georgia,serif;line-height:1.2}
+html[lang="ar"] .countdown-grid small{line-height:1.9;margin-top:14px}

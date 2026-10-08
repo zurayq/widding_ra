@@ -1,4 +1,4 @@
-export type Locale = 'en' | 'tr';
+export type Locale = 'en' | 'tr' | 'ar';
 
 const en = {
   intro: 'A little story of us',
@@ -13,7 +13,7 @@ const en = {
   celebration: 'Today, our next chapter begins.', thankYou: 'Thank you for being part of our love story.', datePending: 'Wedding date to be confirmed',
   destination: 'A place for our next chapter', mapHeading: 'Meet us in Körfez.',
   mapSceneLabel: 'Journey toward Tütünçiftlik, Körfez', venuePinLabel: 'Wedding venue on the illustrated map',
-  mapCaption: 'Körfez, Kocaeli · Türkiye', ceremony: 'The wedding',
+  mapCaption: 'Körfez, Kocaeli · Türkiye', ceremony: 'The wedding', addCalendar: 'Add to calendar',
   date: 'Date', time: 'Time', city: 'City', venue: 'Venue', address: 'Address',
   venuePending: 'Venue details to be added', directions: 'Get directions', viewPlace: 'View venue on Google Maps',
   directionsPending: 'Directions available when the venue is confirmed',
@@ -30,10 +30,10 @@ const en = {
     adultComposition: 'Adult portraits of Amir and Raghed with their names on a decorated torn-paper composition',
     openingPatternAlgeria: 'The decorative pattern placed beside Algeria',
     openingPatternPalestine: 'The decorative pattern placed beside Palestine',
-    mapWide: 'The broad geographic view at the start of the journey toward İzmit',
-    mapCloser: 'A closer geographic view toward İzmit',
-    mapRegional: 'The regional view of the journey toward İzmit',
-    mapCity: 'The final illustrated city-area view of İzmit, Kocaeli',
+    mapWide: 'The broad geographic view at the start of the journey toward Körfez',
+    mapCloser: 'A closer geographic view toward Körfez',
+    mapRegional: 'The regional view of the journey toward Körfez',
+    mapCity: 'The final illustrated city-area view of Körfez, Kocaeli',
     algerianLandmark: 'The Algerian skyline artwork',
     palestinianLandmark: 'The Palestinian skyline artwork',
     verse: 'The Arabic calligraphy of the Quran verse',
@@ -54,7 +54,7 @@ const tr: InvitationCopy = {
   celebration: 'Bugün, yeni hikâyemiz başlıyor.', thankYou: 'Aşk hikâyemizin bir parçası olduğunuz için teşekkür ederiz.', datePending: 'Düğün tarihi yakında duyurulacak',
   destination: 'Yeni hikâyemizin başlayacağı yer', mapHeading: 'Körfez’de buluşalım.',
   mapSceneLabel: 'Tütünçiftlik, Körfez’e yolculuk', venuePinLabel: 'Resimli haritada düğün mekânı',
-  mapCaption: 'Körfez, Kocaeli · Türkiye', ceremony: 'Düğün',
+  mapCaption: 'Körfez, Kocaeli · Türkiye', ceremony: 'Düğün', addCalendar: 'Takvime ekle',
   date: 'Tarih', time: 'Saat', city: 'Şehir', venue: 'Mekân', address: 'Adres',
   venuePending: 'Mekân bilgileri yakında eklenecek', directions: 'Yol tarifi al', viewPlace: 'Mekânı Google Haritalar’da gör',
   directionsPending: 'Mekân kesinleştiğinde yol tarifi eklenecek',
@@ -71,29 +71,56 @@ const tr: InvitationCopy = {
     adultComposition: 'Amir ve Raghed’in adlarıyla birlikte süslenmiş yırtık kâğıt üzerindeki yetişkin portreleri',
     openingPatternAlgeria: 'Cezayir’in yanına yerleştirilen dekoratif desen',
     openingPatternPalestine: 'Filistin’in yanına yerleştirilen dekoratif desen',
-    mapWide: 'İzmit yolculuğunun başlangıcındaki en geniş coğrafi görünüm',
-    mapCloser: 'İzmit’e doğru daha yakın bir coğrafi görünüm',
-    mapRegional: 'İzmit yolculuğunun bölgesel görünümü',
-    mapCity: 'İzmit, Kocaeli şehir bölgesinin son resimli görünümü',
+    mapWide: 'Körfez yolculuğunun başlangıcındaki en geniş coğrafi görünüm',
+    mapCloser: 'Körfez’e doğru daha yakın bir coğrafi görünüm',
+    mapRegional: 'Körfez yolculuğunun bölgesel görünümü',
+    mapCity: 'Körfez, Kocaeli şehir bölgesinin son resimli görünümü',
     algerianLandmark: 'Cezayir silüeti görseli',
     palestinianLandmark: 'Filistin silüeti görseli',
     verse: 'Kur’an ayetinin Arapça hat kompozisyonu',
   },
 };
 
-export const translations: Record<Locale, InvitationCopy> = { en, tr };
+const ar: InvitationCopy = {
+  intro: 'حكايتنا الصغيرة', titleFirst: 'من وطنين.', titleSecond: 'في رحلة واحدة.',
+  subtitle: 'من بيتين، نحو بداية تجمعنا.', scroll: 'مرّروا لتتابعوا حكايتنا', invitation: 'أنتم مدعوون إلى حفل زفافنا',
+  childhood: 'ذات يوم\nكانا مجرد\nقلبين صغيرين', adult: 'وكبرا\nلتبدأ حكاية حب',
+  countdown: 'حتى يومنا المميز', countdownLabel: 'الوقت المتبقي حتى الزفاف',
+  celebrationHeading: 'يوم زفافنا', thankYouHeading: 'بكل الحب والامتنان',
+  days: 'أيام', hours: 'ساعات', minutes: 'دقائق', seconds: 'ثوانٍ',
+  celebration: 'اليوم تبدأ صفحة جديدة من حكايتنا.', thankYou: 'شكرًا لكونكم جزءًا من حكاية حبنا.', datePending: 'سيُعلن موعد الزفاف قريبًا',
+  destination: 'مكان لبداية فصلنا الجديد', mapHeading: 'نلتقي في كورفز.',
+  mapSceneLabel: 'رحلتنا إلى توتون تشيفتليك في كورفز', venuePinLabel: 'مكان الزفاف على الخريطة المرسومة',
+  mapCaption: 'كورفز، كوجالي · تركيا', ceremony: 'الزفاف', addCalendar: 'أضف إلى التقويم',
+  date: 'التاريخ', time: 'الوقت', city: 'المدينة', venue: 'المكان', address: 'العنوان',
+  venuePending: 'ستُضاف تفاصيل المكان قريبًا', directions: 'الاتجاهات', viewPlace: 'عرض المكان على خرائط جوجل',
+  directionsPending: 'ستتوفر الاتجاهات عند تأكيد المكان',
+  ending: 'بيتان. وبداية تجمعنا.', closing: 'صُنع بحب', verseLabel: 'آية قرآنية بالعربية',
+  marmaraSea: 'بحر مرمرة', algeria: 'الجزائر', palestine: 'فلسطين', assetUnavailable: 'هذا الرسم غير متاح حاليًا.',
+  alt: {
+    algeria: 'خريطة الجزائر الذهبية، حيث تبدأ رحلة قلب', palestine: 'خريطة فلسطين الذهبية، حيث تبدأ رحلة القلب الآخر',
+    heart: 'قلب صغير بلون أحمر داكن', childhoodComposition: 'صور أمير ورغد في طفولتهما على ورقة مزخرفة',
+    adultComposition: 'صور أمير ورغد مع اسميهما على ورقة مزخرفة',
+    openingPatternAlgeria: 'زخرفة تقليدية بجانب الجزائر', openingPatternPalestine: 'زخرفة تقليدية بجانب فلسطين',
+    mapWide: 'الخريطة الواسعة في بداية الرحلة إلى كورفز', mapCloser: 'خريطة أقرب إلى كورفز',
+    mapRegional: 'خريطة المنطقة المحيطة بكورفز', mapCity: 'الخريطة المرسومة النهائية لمنطقة كورفز في كوجالي',
+    algerianLandmark: 'رسم أفق المدينة الجزائرية', palestinianLandmark: 'رسم أفق المدينة الفلسطينية', verse: 'رسم الآية القرآنية بالعربية',
+  },
+};
+
+export const translations: Record<Locale, InvitationCopy> = { en, tr, ar };
 
 /** Only the user's supported language preference matters; geography is never consulted. */
 export function supportedLocale(language: string | null | undefined): Locale | null {
   const base = language?.trim().toLowerCase().split('-')[0];
-  return base === 'tr' || base === 'en' ? base : null;
+  return base === 'tr' || base === 'en' || base === 'ar' ? base : null;
 }
 
 export function selectLocale(preferences: readonly string[], manual?: string | null): Locale {
   // Legacy stored selections are intentionally ignored. Primary device language
-  // governs the invitation; every non-Turkish language receives English.
+  // governs the invitation; unsupported languages receive English.
   void manual;
-  return supportedLocale(preferences[0]) === 'tr' ? 'tr' : 'en';
+  return supportedLocale(preferences[0]) ?? 'en';
 }
 
 /** Accept-Language quality weights define the requested order; q=0 entries are unavailable. */
@@ -110,13 +137,13 @@ export function selectLocaleFromAcceptLanguage(header: string | null, manual?: s
 }
 
 export function formatWeddingDate(locale: Locale, dateISO: string, timeZone = 'Europe/Istanbul'): string {
-  return new Intl.DateTimeFormat(locale === 'tr' ? 'tr-TR' : 'en-GB', {
+  return new Intl.DateTimeFormat(locale === 'tr' ? 'tr-TR' : locale === 'ar' ? 'ar' : 'en-GB', {
     day: 'numeric', month: 'long', year: 'numeric', timeZone,
   }).format(new Date(dateISO));
 }
 
 export function formatWeddingTime(locale: Locale, dateISO: string, timeZone = 'Europe/Istanbul'): string {
-  return new Intl.DateTimeFormat(locale === 'tr' ? 'tr-TR' : 'en-GB', {
+  return new Intl.DateTimeFormat(locale === 'tr' ? 'tr-TR' : locale === 'ar' ? 'ar' : 'en-GB', {
     hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone,
   }).format(new Date(dateISO));
 }

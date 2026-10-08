@@ -83,7 +83,8 @@ export const assets = {
     anchor: { x: 191.5 / 355, y: 517.5 / 1026 }, cutoutSize: { width: 125 / 355, height: 117 / 1026 },
   }),
   palastine_small_hart: entry('palastine_small_hart', 'heart', {
-    sourceSize: { width: 629, height: 1086 }, visibleBounds: normalized(146, 436, 297, 253, 629, 1086),
+    filename: 'matte-travelling-heart.png', src: '/assets/travelling-heart.webp',
+    sourceSize: { width: 1297, height: 1213 }, visibleBounds: normalized(151, 178, 998, 837, 1297, 1213),
     visualAnchor: { x: .5, y: .5 },
   }),
   childhoodComposition: childhood,

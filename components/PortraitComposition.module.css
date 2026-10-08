@@ -9,3 +9,5 @@
 .unavailable{padding:22px 18px;text-align:center;font-size:1rem;color:#6b5337;border-block:1px solid #cab58a55}
 .unavailable figcaption{margin-top:10px;font-style:italic}
 .clearance{position:absolute;display:block;pointer-events:none}
+
+:global(html[lang="ar"]) .captionLine{font-family:var(--font-arabic),serif;line-height:1.6;direction:rtl}

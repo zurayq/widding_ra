@@ -12,13 +12,13 @@ export const viewport:Viewport={themeColor:'#fbf8f0'};
 
 export async function generateMetadata():Promise<Metadata> {
   const locale=await getInitialLocale(),names=wedding.names.groom+' & '+wedding.names.bride;
-  const title=names+' — widding.ly',description=names+' · '+formatWeddingDate(locale,wedding.dateISO,wedding.timezone)+' · '+wedding.city+', '+wedding.country;
+  const title=names+' — Wedding invitation',description=names+' · '+formatWeddingDate(locale,wedding.dateISO,wedding.timezone)+' · '+wedding.city+', '+wedding.country;
   const configured=process.env.NEXT_PUBLIC_SITE_URL;
   const request=await headers(),host=request.get('x-forwarded-host')||request.get('host');
   const protocol=request.get('x-forwarded-proto')?.split(',')[0]||(host&&/^(localhost|127\.0\.0\.1)(:|$)/.test(host)?'http':undefined);
   const actualOrigin=host&&/^[a-z\d.:[\]-]+$/i.test(host)&&(protocol==='http'||protocol==='https')?protocol+'://'+host:undefined;
   const metadataBase=configured&&/^https?:\/\//.test(configured)?new URL(configured):actualOrigin?new URL(actualOrigin):undefined;
-  return {title,description,metadataBase,openGraph:{title,description,type:'website',locale:locale==='tr'?'tr_TR':'en_GB',...(metadataBase?{url:metadataBase,images:[{url:'/share-preview.jpg',width:1200,height:630,alt:names}]}:{})},twitter:{card:'summary_large_image',title,description,...(metadataBase?{images:['/share-preview.jpg']}:{})}};
+  return {title,description,metadataBase,openGraph:{title,description,type:'website',locale:locale==='tr'?'tr_TR':locale==='ar'?'ar_AR':'en_GB',...(metadataBase?{url:metadataBase,images:[{url:'/share-preview.jpg',width:1200,height:630,alt:names+' · '+wedding.city+', '+wedding.region}]}:{})},twitter:{card:'summary_large_image',title,description,...(metadataBase?{images:['/share-preview.jpg']}:{})}};
 }
 
 export default async function Layout({ children }: { children: React.ReactNode }) {

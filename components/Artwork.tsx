@@ -16,7 +16,7 @@ export function OliveSprig({ className = '' }: { className?: string }) {
 function Preview({ kind }: { kind: typeof assets[AssetId]['fallback'] }) {
   const uid = useId().replaceAll(':', '');
   const {copy}=useLocale();
-  if (kind === 'heart') return <svg viewBox="0 0 100 86" aria-hidden="true"><defs><linearGradient id={uid} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#cd3540"/><stop offset="1" stopColor="#8e1725"/></linearGradient></defs><path d="M50 84C41 74 3 50 3 27C3 1 37-8 50 18C65-8 97 1 97 27C97 50 58 77 50 84Z" fill={'url(#' + uid + ')'} /><path d="M17 19Q20 8 32 10" stroke="#f4b3aa" strokeWidth="4" strokeLinecap="round" opacity=".55"/></svg>;
+  if (kind === 'heart') return <svg viewBox="0 0 100 86" aria-hidden="true"><path d="M50 84C41 74 3 50 3 27C3 1 37-8 50 18C65-8 97 1 97 27C97 50 58 77 50 84Z" fill="#8f3945" stroke="#6b3432" strokeWidth="1.5"/><path d="M12 29C12 45 39 67 50 77M62 12Q80 5 88 22" fill="none" stroke="#b66869" strokeWidth="1" opacity=".35"/></svg>;
   if (kind === 'map') return <svg viewBox="0 0 1600 900" className="landscape-preview" aria-hidden="true">
     <defs><linearGradient id={uid + 'sea'} x2="0" y2="1"><stop stopColor="#dbe0d8"/><stop offset="1" stopColor="#bfcfc8"/></linearGradient><linearGradient id={uid + 'land'} x2="1" y2="1"><stop stopColor="#e7d6ae"/><stop offset="1" stopColor="#f0e4cd"/></linearGradient></defs>
     <rect width="1600" height="900" fill="#f2e8d2"/>

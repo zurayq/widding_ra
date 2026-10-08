@@ -6,7 +6,7 @@ const browser=await chromium.launch({headless:true,executablePath:process.env.CH
 const base=process.env.INVITATION_REVIEW_URL||'http://localhost:3000';
 await mkdir('.verification/venue',{recursive:true});
 try{
- for(const locale of ['en-US','tr-TR'])for(const width of [320,390]){
+ for(const locale of ['en-US','tr-TR','ar-DZ'])for(const width of [320,390]){
   const context=await browser.newContext({viewport:{width,height:844},locale}),page=await context.newPage();
   await page.goto(base+'/?inspect=1');await page.waitForFunction(()=>window.__weddingMotion?.geometry);await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(200);
   await page.evaluate(()=>{const g=window.__weddingMotion.geometry;scrollTo(0,g.map.y+1050);});

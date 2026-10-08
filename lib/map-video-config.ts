@@ -1,6 +1,6 @@
-/** Corrected İzmit Gulf clip approved for the invitation. */
+/** Lighter Gulf zoom clip approved for the invitation. */
 export const mapVideo = {
-  src: '/assets/map-zoom.mp4', startPoster: '/assets/map-zoom-start.webp',
-  poster: '/assets/map-zoom-end.webp', width: 1920, height: 1080,
-  duration: 6.4, fps: 60, arrival: .82,
+  src: '/assets/map-zoom-mobile.mp4', startPoster: '/assets/map-zoom-mobile-start.webp',
+  poster: '/assets/map-zoom-mobile-end.webp', width: 1280, height: 720,
+  duration: 6.4, fps: 30, arrival: .82,
 };

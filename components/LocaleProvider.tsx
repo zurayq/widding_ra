@@ -7,7 +7,7 @@ export function LocaleProvider({initialLocale,children}:{initialLocale:Locale;ch
  const [locale,setLocale]=useState(initialLocale);
  useLayoutEffect(()=>{
   const override=new URLSearchParams(location.search).get('lang');
-  const next=override==='en'||override==='tr'?override:selectLocale([navigator.language]);
+  const next=override==='en'||override==='tr'||override==='ar'?override:selectLocale([navigator.language]);
   if(next!==initialLocale)setLocale(next);
  },[initialLocale]);
  useLayoutEffect(()=>{document.documentElement.lang=locale;document.documentElement.dir='ltr';},[locale]);

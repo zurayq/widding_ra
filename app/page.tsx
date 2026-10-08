@@ -52,7 +52,11 @@ export default function Page(){
     </section>
     <section className="countdown-scene scene" data-scene="countdown" aria-label={copy.ceremony}>
       <StoryDecorations area="countdown"/>
-      <div className="countdown-card paper-wrap" data-reveal="countdown"><div className="paper countdown-paper"><p className="eyebrow">{copy.ceremony}</p><Countdown/><Flourish/><p className="wedding-date">{formatWeddingDate(locale,wedding.dateISO,wedding.timezone)}<span>{formatWeddingTime(locale,wedding.dateISO,wedding.timezone)} · {wedding.country}</span></p></div><OliveSprig className="countdown-sprig"/></div>
+      <div className="countdown-card" data-reveal="countdown"><div className="countdown-paper">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="countdown-paper-art" src="/assets/countdown-keepsake.webp" width={800} height={1200} alt="" aria-hidden="true" loading="lazy"/>
+        <div className="countdown-content"><p className="eyebrow">{copy.ceremony}</p><Countdown/><Flourish/><p className="wedding-date">{formatWeddingDate(locale,wedding.dateISO,wedding.timezone)}<span>{formatWeddingTime(locale,wedding.dateISO,wedding.timezone)} · {wedding.country}</span></p><a className="calendar-link" href="/wedding.ics" download="amir-raghed-wedding.ics">{copy.addCalendar}</a></div>
+      </div></div>
     </section>
     <MapStage/>
     <footer className="ending scene" data-scene="ending" aria-label={copy.closing}>

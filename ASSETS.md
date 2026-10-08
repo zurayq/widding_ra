@@ -6,7 +6,7 @@ All eleven originals remain intact under `Assets/`. `lib/assets.ts` retains thei
 | --- | --- | --- | --- | --- |
 | `algeria_hart_map.webp` | `algeria_hart_map.png` | 1010×1086 | 650×699 | Transparent; measured visible window, contain |
 | `palastine_hart_map.webp` | `palastine_hart_map.png` | 446×1086 | 350×852 | Transparent; measured visible window, contain |
-| `palastine_small_hart.webp` | `palastine_small_hart.png` | 629×1086 | 350×604 | Transparent; principal red silhouette; exactly two travelling instances |
+| `travelling-heart.webp` | `matte-travelling-heart.png` | 1297×1213 | 400×374 | Transparent matte burgundy paper; exactly two travelling instances |
 | `childhoodComposition.webp` | `ChatGPT Image Oct 6, 2026, 07_51_13 PM.png` | 1024×1536 | 900×1350 | Transparent; full childhood composition |
 | `adultComposition.webp` | `ChatGPT Image Oct 6, 2026, 08_33_05 PM.png` | 1122×1402 | 1000×1250 | Transparent; full adult composition and original name labels |
 | `openingPatternAlgeria.webp` | `ChatGPT Image Oct 6, 2026, 07_51_03 PM.png` | 887×1774 | 600×1200 | Transparent; contain visible crop; strong opening / faint throughout |
@@ -22,21 +22,21 @@ Public URLs are `/assets/<semantic-role>.webp`, with exact casing audited even o
 
 Eight active public PNGs and the unused `couple_childhood.png` were truncated to approximately 786KB and failed full browser/Sharp decoding despite HTTP 200. The originals were valid. They were restored, browser-decoded and then optimized. All final derivatives decode fully. `scripts/check-assets.mjs` checks exact filenames, decoded content and aspect ratios. `scripts/optimize-assets.mjs` can regenerate them; its detailed size report is `.verification/asset-sizes.json`.
 
-Equivalent original artwork: **19,149,900 bytes**. Optimized artwork: **2,503,050 bytes**. Saved: **16,646,850 bytes (86.9%)**. WebP quality is 94 for portraits, 88 elsewhere, alpha quality 100. Comparisons do not use the smaller, invalid truncated files as a baseline. Original PNGs are recoverable in `Assets/`; previous public copies are archived locally under `.verification/legacy-public/` and in Git history. No PNG duplicate remains in the active public asset folder.
+Historical optimization baseline for the initial eleven artworks: **19,149,900 bytes**. Optimized artwork: **2,503,050 bytes**. Saved: **16,646,850 bytes (86.9%)**. WebP quality is 94 for portraits, 88 elsewhere, alpha quality 100. Comparisons do not use the smaller, invalid truncated files as a baseline. Original PNGs are recoverable in `Assets/`; previous public copies are archived locally under `.verification/legacy-public/` and in Git history. No PNG duplicate remains in the active public asset folder.
 
 ## Alignment, masks and captions
 
-Registry bounds are normalized against the full original canvas. Algeria's visible window is `(76,52,920,998)`, with cutout centre `(497.5/920,555.5/998)` and size `(143/920,133/998)`. Palestine's window is `(13,45,355,1026)`, centre `(191.5/355,517.5/1026)`, size `(125/355,117/1026)`. The heart's principal red-body window is `(146,436,297,253)`; stray alpha pixels are excluded. The traveller is 24px, or 22px on narrow phones.
+Registry bounds are normalized against the full original canvas. Algeria's visible window is `(76,52,920,998)`, with cutout centre `(497.5/920,555.5/998)` and size `(143/920,133/998)`. Palestine's window is `(13,45,355,1026)`, centre `(191.5/355,517.5/1026)`, size `(125/355,117/1026)`. The matte heart's measured visible window is `(151,178,998,837)` on its 1297×1213 canvas; the original glossy heart remains recoverable. Country-map cut-out positions and traveller slot dimensions are preserved. The traveller is 24px, or 22px on narrow phones.
 
 Both full portrait images remain visible. Precisely confined masks sample clean paper from the same image to cover baked English glyphs. Larger localized HTML captions use a warm torn-paper label within the former caption area, flowing vertically when text is enlarged. Faces, canvas edges, flowers and original adult names remain intact. Registry `composition.captionRegions` records original mask rectangles/polygons/paper samples; `composition.clearance` records meaningful artwork bounds. Text is never shrunk to an unreadably small width. Texture patches may show seams under magnification; no pixel-perfect reference match is claimed.
 
-The four legacy map WebPs above remain source references. The live stage uses the approved corrected İzmit Gulf zoom: `map-zoom.mp4` (1920×1080, 60fps, 6.4 seconds, silent H.264, fast-start, keyframes every 0.5s) with matching `map-zoom-start.webp` / `map-zoom-end.webp` at 1920×1080. The camera follows the illustrated shore point `(669.6,384)` on the original 1672×941 wide artwork; `lib/map-camera.ts` converts it through the clip's continuous camera and mobile framing. Arrival finishes at 82% before the venue note appears. Media failure and reduced/no motion use the corrected final still. This illustration point is not georeferenced; Google Maps directions retain the independently supplied coordinates in `lib/content.ts`.
+The four legacy map WebPs above remain source references. The recoverable full-HD source of the approved Gulf zoom is `map-zoom.mp4` (1920×1080, 60fps, 6.4 seconds, silent H.264, fast-start, keyframes every 0.5s) with matching `map-zoom-start.webp` / `map-zoom-end.webp` at 1920×1080. The camera follows the illustrated shore point `(669.6,384)` on the original 1672×941 wide artwork; `lib/map-camera.ts` converts it through the clip's continuous camera and mobile framing. Arrival finishes at 82% before the venue note appears. Media failure and reduced/no motion use the corrected final still. This illustration point is not georeferenced; Google Maps directions retain the independently supplied coordinates in `lib/content.ts`.
 
 ## Decorations, share artwork and fonts
 
 `components/StoryDecorations.tsx` contains reusable `decorative-heart-small` and `decorative-rose-small` SVGs. Both follow the supplied `IMG_3011.jpeg` aesthetic: uneven dark-brown outlines, cream paper centres, beige paper rims and subtle grain. Roses use brown ink petal curls, stems and paper-filled leaves. Hearts occupy a 22×26px slot and roses a 23×29px slot, both at 85% opacity so their outlines remain legible. Their static anchors are local to each section. Scroll response is bounded to 3–4px and 2–3°; they have no trail, input or accessibility role. SVG gradient/filter IDs are unique per instance and decoration kind.
 
-`public/share-preview.jpg` and `app/opengraph-image.png` provide the 1200×630 share composition. `app/icon.svg` and `app/favicon.ico` provide icons. `scripts/create-share-image.mjs` regenerates them. Lora and Noto Naskh Arabic, with their OFL licenses, live in `app/fonts/` and load through `next/font/local`.
+Only `public/share-preview.jpg` provides the 1200×630 share composition. `app/icon.svg` and `app/favicon.ico` provide icons. `scripts/create-share-image.mjs` regenerates them. Lora and Noto Naskh Arabic, with their OFL licenses, live in `app/fonts/` and load through `next/font/local`.
 
 `algerian_landmark`, `palestinian_landmark` and `quran_verse` are disabled optional registry roles with no supplied source filename. Unfinished skylines are hidden; live Arabic is displayed. Real optional artwork requires an exact source, dimensions, normalized useful bounds and enabled configuration. No existing skyline/calligraphy file is falsely claimed.
 
@@ -51,3 +51,9 @@ The four legacy map WebPs above remain source references. The live stage uses th
 ## Verse paper artwork
 
 `verse-keepsake.webp` (1000×563, WebP quality 92, full alpha) is the approved gold-edged cream slip with pressed golden flowers, dried buds and small paper-tape accents. Exterior backdrop and all baked calligraphy were removed through image editing; the central textured paper remains blank for live Arabic. Its source is a generated letter-free variant of the approved preview.
+
+## Countdown and lighter map media
+
+`countdown-keepsake.webp` (800×1200, quality 92, full alpha) frames live localized text with the approved cream/gold paper and taped golden flower. It contains no baked lettering or numbers. `travelling-heart.webp` is a matte paper/ink edit of the original heart with measured visible bounds, retaining the rounded shape rather than glossy highlights; its original is in `Assets/matte-travelling-heart.png`.
+
+The active clip is now `map-zoom-mobile.mp4` (1280×720, 30fps, 6.4s, 3,001,500 bytes, keyframes every 0.5s), with matching `map-zoom-mobile-start.webp` and `map-zoom-mobile-end.webp`. The full-HD media above remain recoverable sources and are not requested by the invitation. The exact same map movement is downscaled, never regenerated.
