@@ -10,7 +10,8 @@ import { StoryDecorations } from '../components/StoryDecorations';
 import { InvitationAudio } from '../components/InvitationAudio';
 import { useLocale } from '../components/LocaleProvider';
 import { formatWeddingDate, formatWeddingTime } from '../lib/i18n';
-import { wedding } from '../lib/content';
+import { wedding, buildDirectionsUrl } from '../lib/content';
+import { googleCalendarUrl } from '../lib/calendar';
 function Flourish(){return <div className="flourish" aria-hidden="true"><i/><span>◇</span><i/></div>;}
 export default function Page(){
   const {locale,copy}=useLocale();
@@ -56,7 +57,7 @@ export default function Page(){
       <div className="countdown-card" data-reveal="countdown"><div className="countdown-paper">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="countdown-paper-art" src="/assets/countdown-keepsake.webp" width={800} height={1200} alt="" aria-hidden="true" loading="lazy"/>
-        <div className="countdown-content"><p className="eyebrow">{copy.ceremony}</p><Countdown/><Flourish/><p className="wedding-date">{formatWeddingDate(locale,wedding.dateISO,wedding.timezone)}<span>{formatWeddingTime(locale,wedding.dateISO,wedding.timezone)} · {wedding.country}</span></p><a className="calendar-link" href="/wedding.ics" download="amir-raghed-wedding.ics">{copy.addCalendar}</a></div>
+        <div className="countdown-content"><p className="eyebrow">{copy.ceremony}</p><Countdown/><Flourish/><p className="wedding-date">{formatWeddingDate(locale,wedding.dateISO,wedding.timezone)}<span>{formatWeddingTime(locale,wedding.dateISO,wedding.timezone)} · {wedding.country}</span></p><div className="calendar-actions"><a className="calendar-link" href={googleCalendarUrl(wedding,buildDirectionsUrl())} target="_blank" rel="noopener noreferrer">{copy.addCalendar}</a><a className="calendar-link calendar-download" href="/wedding.ics" download="amir-raghed-wedding.ics">{copy.otherCalendars}</a></div></div>
       </div></div>
     </section>
     <MapStage/>

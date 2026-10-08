@@ -1,4 +1,16 @@
 import type { wedding as weddingData } from './content';
+/** Four hours is an editable calendar placeholder, not a confirmed finish time. */
+export function googleCalendarUrl(wedding: typeof weddingData, directions: string): string {
+  const fmt = (date: Date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  const start = new Date(wedding.dateISO);
+  const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
+  const location = [wedding.venueName, wedding.address, wedding.city, wedding.region, wedding.country].filter(Boolean).join(', ');
+  const params = new URLSearchParams({
+    action: 'TEMPLATE', text: wedding.names.groom + ' & ' + wedding.names.bride + ' — Wedding',
+    dates: fmt(start) + '/' + fmt(end), details: directions, location, ctz: wedding.timezone,
+  });
+  return 'https://calendar.google.com/calendar/render?' + params.toString();
+}
 const escapeText = (value: string) => value.replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/[,;]/g, '\\$&');
 /** Fold at UTF-8 character boundaries, with a maximum of 75 octets per line. */
 function fold(value: string): string {

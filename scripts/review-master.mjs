@@ -53,7 +53,8 @@ try{
    check(largest<.15,'Text crossings change transparency gradually rather than snapping');
   }
   await page.locator('.countdown-paper-art').evaluate(image=>image.decode());
-  check(await page.locator('.calendar-link').getAttribute('href')==='/wedding.ics','Calendar download is available');
+  check(new URL(await page.locator('.calendar-link:not(.calendar-download)').getAttribute('href')).origin==='https://calendar.google.com','Google Calendar is the primary calendar action');
+  check(await page.locator('.calendar-download').getAttribute('href')==='/wedding.ics','Calendar download remains available');
   const local=await page.evaluate(()=>[...document.querySelectorAll('[data-decoration]')].map(el=>{const b=el.getBoundingClientRect(),parent=el.closest('section').getBoundingClientRect();return{x:b.x-parent.x,y:b.y-parent.y,width:b.width,height:b.height,parentWidth:parent.width,parentHeight:parent.height,transform:el.style.transform};}));
   check(local.every(b=>b.x>=-1&&b.y>=-1&&b.x+b.width<=b.parentWidth+1&&b.y+b.height<=b.parentHeight+1),'Decorations stay inside their own sections '+width);
   check(await page.locator('.verse-paper-art').evaluate(async image=>{await image.decode();return image.naturalWidth===1000&&image.naturalHeight===563;}),'Pressed-flower verse artwork decodes at '+width);

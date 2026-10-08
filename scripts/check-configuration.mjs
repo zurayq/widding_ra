@@ -55,7 +55,15 @@ for(const copy of Object.values(translations)){
  assert(!/weekend|October|15:00|3 p\.m\./i.test(copy.subtitle),'Opening subtitle has no date or time');
 }
 assert.deepEqual(wedding.verseLines,['وَجَعَلْنَاكُمْ شُعُوبًا','وَقَبَائِلَ لِتَعَارَفُوا'],'Copy edits preserve the exact supplied verse');
-import {weddingCalendar} from '../lib/calendar.ts';
+import {weddingCalendar,googleCalendarUrl} from '../lib/calendar.ts';
+const google=new URL(googleCalendarUrl(wedding,buildDirectionsUrl()));
+assert.equal(google.origin,'https://calendar.google.com');
+assert.equal(google.searchParams.get('action'),'TEMPLATE');
+assert.equal(google.searchParams.get('dates'),'20261017T120000Z/20261017T160000Z');
+assert.equal(google.searchParams.get('ctz'),'Europe/Istanbul');
+assert.equal(google.searchParams.get('text'),'Amir & Raghed — Wedding');
+assert.equal(google.searchParams.get('location'),'Tütünçiftlik Kültür Merkezi, Körfez, Kocaeli, Türkiye');
+assert.equal(google.searchParams.get('details'),buildDirectionsUrl());
 const calendar=weddingCalendar(wedding,buildDirectionsUrl()),unfolded=calendar.replace(/\r\n /g,'');
 assert(unfolded.includes('DTSTART:20261017T120000Z\r\n'));
 assert(unfolded.includes('GEO:40.7603888;29.7847177'));

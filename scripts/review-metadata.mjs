@@ -9,6 +9,15 @@ try{
  assert.equal(await page.locator('meta[property="og:image"]').count(),1,'Only one preview image');
  assert(metadata['og:image'].endsWith('/share-preview.jpg'));assert(metadata['og:image:alt'].includes('Körfez'));assert(!metadata['og:title'].includes('widding.ly'));
  const calendar=await page.request.get(base+'/wedding.ics');assert.equal(calendar.status(),200);assert(calendar.headers()['content-type'].startsWith('text/calendar'));assert(calendar.headers()['content-disposition'].includes('attachment'));assert((await calendar.text()).includes('DTSTART:20261017T120000Z'));
+ for(const locale of ['en','tr','ar']){
+  await page.setViewportSize({width:320,height:844});await page.goto(base+'/?lang='+locale);
+  const primary=page.locator('.calendar-link:not(.calendar-download)'),url=new URL(await primary.getAttribute('href'));
+  assert.equal(url.origin,'https://calendar.google.com');assert.equal(url.searchParams.get('dates'),'20261017T120000Z/20261017T160000Z');assert.equal(url.searchParams.get('ctz'),'Europe/Istanbul');
+  assert.equal(await primary.getAttribute('target'),'_blank');assert((await primary.getAttribute('rel')).includes('noopener'));
+  assert.equal(await page.locator('.calendar-download').getAttribute('href'),'/wedding.ics');
+  await page.locator('.calendar-actions').scrollIntoViewIfNeeded();
+  assert(await page.locator('.calendar-actions').evaluate(el=>[...el.children].every(link=>{const b=link.getBoundingClientRect();return b.left>=0&&b.right<=innerWidth&&b.height>=44;})),'Both calendar actions fit 320px and retain touch targets: '+locale);
+ }
  assert.equal(metadata['theme-color'],'#fbf8f0');assert.equal(metadata['twitter:card'],'summary_large_image');
  for(const field of ['og:image','twitter:image']){assert(metadata[field]?.startsWith(base),'Share image uses actual request origin');const response=await page.request.get(metadata[field]);assert.equal(response.status(),200);}
  for(const path of ['/favicon.ico','/icon.svg','/share-preview.jpg'])assert.equal((await page.request.get(base+path)).status(),200,path);
