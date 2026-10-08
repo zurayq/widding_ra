@@ -16,6 +16,11 @@ export function OliveSprig({ className = '' }: { className?: string }) {
 function Preview({ kind }: { kind: typeof assets[AssetId]['fallback'] }) {
   const uid = useId().replaceAll(':', '');
   const {copy}=useLocale();
+  if(kind==='opening')return <svg viewBox="0 0 1515 1038" aria-hidden="true">
+    <defs><mask id={uid+'slots'}><rect width="1515" height="1038" fill="white"/>{[[438,574,104,89],[1229.5,502,97,84]].map(([x,y,w,h])=><path key={x} transform={'translate('+(x-w/2)+' '+(y-h/2)+') scale('+(w/100)+' '+(h/86)+')'} d="M50 84C41 74 3 50 3 27C3 1 37-8 50 18C65-8 97 1 97 27C97 50 58 77 50 84Z" fill="black"/>)}</mask></defs>
+    <g fill="#f0dfb9" stroke="#b28b53" strokeWidth="4" mask={'url(#'+uid+'slots)'}><path d="M287 289L609 225L608 345L650 452L661 568L713 718L532 860L450 861L296 757L129 567L209 452L306 403Z"/><path d="M1314 123L1341 225L1331 399L1303 520L1306 616L1257 745L1205 886L1180 735L1115 641L1084 574L1149 453L1199 294L1231 180L1291 181Z"/></g>
+    <g fill="none" stroke="#b18a4e" strokeWidth="3"><path d="M252 804Q130 643 104 490M1330 803Q1405 701 1417 581"/><path d="M197 716Q106 701 154 666Q184 647 197 716ZM1368 746Q1400 681 1433 710Q1460 738 1368 746Z"/></g>
+  </svg>;
   if (kind === 'heart') return <svg viewBox="0 0 100 86" aria-hidden="true"><path d="M50 84C41 74 3 50 3 27C3 1 37-8 50 18C65-8 97 1 97 27C97 50 58 77 50 84Z" fill="#8f3945" stroke="#6b3432" strokeWidth="1.5"/><path d="M12 29C12 45 39 67 50 77M62 12Q80 5 88 22" fill="none" stroke="#b66869" strokeWidth="1" opacity=".35"/></svg>;
   if (kind === 'map') return <svg viewBox="0 0 1600 900" className="landscape-preview" aria-hidden="true">
     <defs><linearGradient id={uid + 'sea'} x2="0" y2="1"><stop stopColor="#dbe0d8"/><stop offset="1" stopColor="#bfcfc8"/></linearGradient><linearGradient id={uid + 'land'} x2="1" y2="1"><stop stopColor="#e7d6ae"/><stop offset="1" stopColor="#f0e4cd"/></linearGradient></defs>
@@ -41,7 +46,7 @@ function Preview({ kind }: { kind: typeof assets[AssetId]['fallback'] }) {
 }
 export function Artwork({ id, className = '', alt }: { id: AssetId; className?: string; alt?: string }) {
   const asset = assets[id];
-  const priority=['algeria_hart_map','palastine_hart_map','palastine_small_hart','openingPatternAlgeria','openingPatternPalestine'].includes(id);
+  const priority=['openingComposition','algeria_hart_map','palastine_hart_map','palastine_small_hart','openingPatternAlgeria','openingPatternPalestine'].includes(id);
   const {ref,status,setStatus,requested}=useArtworkLoad(asset.src,priority,asset.enabled!==false);
   const v = visibleWindow(asset), size = asset.sourceSize;
   const viewBox = [v.x*size.width,v.y*size.height,v.width*size.width,v.height*size.height].join(' ');

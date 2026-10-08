@@ -3,7 +3,6 @@ import {useLayoutEffect,useRef,useState} from 'react';
 import {gsap} from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import {Artwork} from './Artwork';
-import {assets,visibleWindow} from '../lib/assets';
 import {buildJourney,sampleJourney,type Box,type Pose,type StoryGeometry,type Knot} from '../lib/choreography';
 import {buildRouteNetwork,routeLengthAt,type RouteSpan} from '../lib/trails';
 import {configureMapGeometry,drawMapCamera,showFinalMap} from '../lib/map-camera';
@@ -26,9 +25,8 @@ export function StoryMotion(){
   const clear=()=>{animated.forEach(el=>{el.style.opacity='';el.style.transform='';});hearts.current.forEach(heart=>{const art=heart?.querySelector<HTMLElement>('.artwork');if(art)art.style.transform='';});};
   const origins=(main:DOMRect):[Pose,Pose]=>{
    const measure=(id:'algeria_hart_map'|'palastine_hart_map'):Pose=>{
-    const b=root.querySelector('[data-origin="'+id+'"] .artwork')!.getBoundingClientRect(),a=assets[id],v=visibleWindow(a);
-    const ratio=a.sourceSize.width*v.width/(a.sourceSize.height*v.height),dw=Math.min(b.width,b.height*ratio),dh=dw/ratio;
-    return{x:b.left-main.left+(b.width-dw)/2+dw*a.anchor!.x,y:b.top-main.top+(b.height-dh)/2+dh*a.anchor!.y,width:dw*a.cutoutSize!.width,height:dh*a.cutoutSize!.height,rotation:0,depth:2};
+    const b=root.querySelector('[data-origin="'+id+'"]')!.getBoundingClientRect();
+    return{x:b.left-main.left+b.width/2,y:b.top-main.top+b.height/2,width:b.width,height:b.height,rotation:0,depth:2};
    };return[measure('algeria_hart_map'),measure('palastine_hart_map')];
   };
   const place=(poses:[Pose,Pose])=>poses.forEach((p,i)=>gsap.set(hearts.current[i],{x:p.x-p.width/2,y:p.y-p.height/2,width:p.width,height:p.height,rotation:p.rotation,zIndex:p.depth}));
@@ -105,7 +103,7 @@ export function StoryMotion(){
     svg.current!.style.opacity=s<=routes[0].start?'0':'1';
     for(const decoration of decorations){const influence=Math.exp(-Math.abs(p.route.y-decoration.y)/230),phase=s/115+decoration.index;gsap.set(decoration.el,{x:Math.sin(phase)*decoration.sway*influence,y:Math.cos(phase*.8)*decoration.sway*influence,rotation:Math.sin(phase+.5)*decoration.tilt*influence});}
     const departure=range(s,58,285);gsap.set(originElement,{opacity:1-departure,y:-20*departure,scale:1-.06*departure});
-    for(const pattern of patterns)gsap.set(pattern,{opacity:.11*(1-departure),y:-18*departure});
+    for(const pattern of patterns)gsap.set(pattern,{opacity:.38*(1-departure),y:-18*departure});
     gsap.set(headingElement,{opacity:1-range(s,70,290),y:-9*range(s,70,290)});
     const focus=Math.min(370,viewportHeight*.43),verseIn=range(s,g.verse.y-focus-135,g.verse.y-focus-5),verseOut=range(s,g.verse.y+g.verse.height-focus+50,g.verse.y+g.verse.height-focus+155);
     reveal('verse',verseIn*(1-verseOut));

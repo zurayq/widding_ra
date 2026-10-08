@@ -1,5 +1,7 @@
 'use client';
-import { Artwork, OliveSprig } from '../components/Artwork';
+import { Artwork } from '../components/Artwork';
+import { OpeningOrigins } from '../components/OpeningOrigins';
+import { TraditionalBorder } from '../components/TraditionalBorder';
 import { PortraitComposition } from '../components/PortraitComposition';
 import { Countdown } from '../components/Countdown';
 import { StoryMotion } from '../components/StoryMotion';
@@ -13,19 +15,16 @@ export default function Page(){
   const {locale,copy}=useLocale();
   return <main className="invitation enhanced" id="invitation">
     <div className="story-patterns" aria-hidden="true">
-      <div className="story-pattern story-pattern-left"><Artwork id="openingPatternAlgeria"/></div>
-      <div className="story-pattern story-pattern-right"><Artwork id="openingPatternPalestine"/></div>
+      <div className="story-pattern story-pattern-left"><TraditionalBorder country="algeria"/></div>
+      <div className="story-pattern story-pattern-right"><TraditionalBorder country="palestine"/></div>
     </div>
     <StoryMotion/>
     <section className="opening scene" data-scene="opening" aria-label={copy.intro}>
       <div className="opening-heading"><p className="eyebrow">{copy.intro}</p><h1>{copy.titleFirst}<br/><em>{copy.titleSecond}</em></h1><p className="intro-subtitle">{copy.subtitle}</p></div>
       <div className="origin-composition">
-        <div className="edge-pattern edge-left"><Artwork id="openingPatternAlgeria"/></div>
-        <div className="edge-pattern edge-right"><Artwork id="openingPatternPalestine"/></div>
-        <div className="origins">
-          <figure className="origin algeria"><div data-origin="algeria_hart_map"><Artwork id="algeria_hart_map" alt={copy.alt.algeria}/></div><figcaption>{copy.algeria}</figcaption><OliveSprig className="map-sprig"/></figure>
-          <figure className="origin palestine"><div data-origin="palastine_hart_map"><Artwork id="palastine_hart_map" alt={copy.alt.palestine}/></div><figcaption>{copy.palestine}</figcaption><OliveSprig className="map-sprig"/></figure>
-        </div>
+        <div className="edge-pattern edge-left"><TraditionalBorder country="algeria"/></div>
+        <div className="edge-pattern edge-right"><TraditionalBorder country="palestine"/></div>
+        <OpeningOrigins algeria={copy.algeria} palestine={copy.palestine}/>
       </div>
       <div className="scroll-invitation"><span>{copy.scroll}</span><svg viewBox="0 0 16 44" aria-hidden="true"><path d="M8 1V38M3 32L8 39L13 32" fill="none" stroke="currentColor"/></svg></div>
     </section>

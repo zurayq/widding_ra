@@ -7,7 +7,7 @@ export type CaptionRegion = {
 export type Asset = {
   id: string; src: string; filename?: string; sourcePath?: string; alt: string; decorative: boolean;
   sourceSize: { width: number; height: number }; visibleBounds: Bounds; alphaBounds?: Bounds; alpha: 'transparent' | 'opaque' | 'fallback';
-  fit: 'contain'; fallback: 'algeria' | 'palestine' | 'heart' | 'memory' | 'map' | 'pattern' | 'monument' | 'dome' | 'verse';
+  fit: 'contain'; fallback: 'algeria' | 'palestine' | 'heart' | 'memory' | 'map' | 'pattern' | 'monument' | 'dome' | 'verse' | 'opening';
   enabled?: boolean;
   anchor?: Point; cutoutSize?: { width: number; height: number };
   visualAnchor?: Point; destinationAnchor?: Point; cameraFocalAnchor?: Point; maxScale?: number;
@@ -70,6 +70,11 @@ const adult = entry('adultComposition', 'memory', {
   },
 });
 export const assets = {
+  openingComposition: entry('openingComposition', 'opening', {
+    filename: 'opening-keepsake.png', src: '/assets/opening-keepsake.webp',
+    sourceSize: {width:1515,height:1038},
+    alt: 'Gold-edged paper maps with pressed flowers beside Algeria and Palestine',
+  }),
   algeria_hart_map: entry('algeria_hart_map', 'algeria', {
     alt: 'Algeria, one of our two homes', decorative: false,
     sourceSize: { width: 1010, height: 1086 },
@@ -127,6 +132,12 @@ export const assets = {
   quran_verse: entry('quran_verse', 'verse', { enabled: false, src: '', filename: undefined, sourcePath: undefined, alpha: 'fallback', sourceSize: { width: 1200, height: 400 } }),
 } satisfies Record<string, Asset>;
 export type AssetId = keyof typeof assets;
+// Measured transparent holes in the approved letter-free composition. The
+// same rectangles position static/no-JS hearts and start the shared live dance.
+export const openingHomes = [
+  {id:'algeria_hart_map',bounds:normalized(386,529,104,89,1515,1038)},
+  {id:'palastine_hart_map',bounds:normalized(1181,460,97,84,1515,1038)},
+] as const;
 export const mapAssetOrder = ['mapWide', 'mapCloser', 'mapRegional', 'mapCity'] as const;
 export function visibleWindow(asset: Asset): Bounds {
   return asset.visibleBounds;

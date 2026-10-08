@@ -1,6 +1,6 @@
 # Active artwork and recoverable originals
 
-All eleven originals remain intact under `Assets/`. `lib/assets.ts` retains their original dimensions and normalized alignment/caption metadata, while `src` points to the optimized WebP below. The SVG canvas scales each derivative proportionally into the original coordinate system; no normalized anchors were invalidated by resizing.
+All eleven original supplied artworks remain intact under `Assets/`. The approved opening now uses one newer keepsake composition; its source and measured heart homes are documented below. Legacy country maps and raster patterns are retained for recovery but are no longer requested by the opening. `lib/assets.ts` retains original dimensions and normalized alignment/caption metadata, while `src` points to optimized WebP derivatives.
 
 | Role / public WebP | Exact original filename in `Assets/` | Original size | Optimized size | Alpha / fit |
 | --- | --- | --- | --- | --- |
@@ -26,7 +26,7 @@ Historical optimization baseline for the initial eleven artworks: **19,149,900 b
 
 ## Alignment, masks and captions
 
-Registry bounds are normalized against the full original canvas. Algeria's visible window is `(76,52,920,998)`, with cutout centre `(497.5/920,555.5/998)` and size `(143/920,133/998)`. Palestine's window is `(13,45,355,1026)`, centre `(191.5/355,517.5/1026)`, size `(125/355,117/1026)`. The matte heart's measured visible window is `(151,178,998,837)` on its 1297×1213 canvas; the original glossy heart remains recoverable. Country-map cut-out positions and traveller slot dimensions are preserved. The traveller is 24px, or 22px on narrow phones.
+Registry bounds are normalized against the full original canvas. Legacy country map alignment metadata remains recoverable. The active opening uses the new composition's measured hole rectangles `(386,529,104,89)` and `(1181,460,97,84)` on a 1515×1038 canvas. The matte heart's measured visible window is `(151,178,998,837)` on its 1297×1213 canvas; the original glossy heart remains recoverable. Home poses are measured directly from responsive layout markers, then blend into the unchanged 24px (22px on narrow phones) dance.
 
 Both full portrait images remain visible. Precisely confined masks sample clean paper from the same image to cover baked English glyphs. Larger localized HTML captions use a warm torn-paper label within the former caption area, flowing vertically when text is enlarged. Faces, canvas edges, flowers and original adult names remain intact. Registry `composition.captionRegions` records original mask rectangles/polygons/paper samples; `composition.clearance` records meaningful artwork bounds. Text is never shrunk to an unreadably small width. Texture patches may show seams under magnification; no pixel-perfect reference match is claimed.
 
@@ -57,3 +57,9 @@ Only `public/share-preview.jpg` provides the 1200×630 share composition. `app/i
 `countdown-keepsake.webp` (800×1200, quality 92, full alpha) frames live localized text with the approved cream/gold paper and taped golden flower. It contains no baked lettering or numbers. `travelling-heart.webp` is a matte paper/ink edit of the original heart with measured visible bounds, retaining the rounded shape rather than glossy highlights; its original is in `Assets/matte-travelling-heart.png`.
 
 The active clip is now `map-zoom-mobile.mp4` (1280×720, 30fps, 6.4s, 3,001,500 bytes, keyframes every 0.5s), with matching `map-zoom-mobile-start.webp` and `map-zoom-mobile-end.webp`. The full-HD media above remain recoverable sources and are not requested by the invitation. The exact same map movement is downscaled, never regenerated.
+# Approved opening keepsake
+
+`Assets/opening-keepsake.png` is the transparent source (1515×1038), with its production derivative at `public/assets/opening-keepsake.webp` (1000px wide). Native country labels and the existing two moving hearts remain separate. `openingHomes` in `lib/assets.ts` records the measured transparent cut-outs; both static and animated poses use those rectangles. Flowers sit outside the maps. `TraditionalBorder.tsx` supplies distinct crisp geometric/stitched edge ornaments, flush to the invitation edges, with faint continuity through the story.
+
+Built-in image-edit prompt used: “Extract only the two champagne folded-paper country silhouettes and their attached outer golden flower sprigs from the approved opening preview. Preserve shapes, paper folds, gold outlines and relative placement: Algeria left, flowers outside left; Palestine right, flowers outside right. Remove the background, all lettering, both edge patterns and both burgundy hearts. Leave exterior areas and exact heart-shaped slots genuinely transparent. No rearranging, added elements, baked checkerboard or style change.”
+

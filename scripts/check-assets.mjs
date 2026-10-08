@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import {assets} from '../lib/assets.ts';
+import {assets,openingHomes} from '../lib/assets.ts';
 import {mapVideo} from '../lib/map-video-config.ts';
 import {readdir,stat,readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -25,8 +25,16 @@ const skylineMeta=await skyline.metadata();assert.equal(skylineMeta.width,1000);
 const verse=sharp('public/assets/verse-keepsake.webp');await verse.raw().toBuffer();
 const verseMeta=await verse.metadata();assert.equal(verseMeta.width,1000);assert.equal(verseMeta.height,563);assert(verseMeta.hasAlpha,'Verse paper has transparent edges');
 const counter=await sharp('public/assets/countdown-keepsake.webp').metadata();assert(counter.hasAlpha);assert.equal(counter.width,800);assert.equal(counter.height,1200);
+const opening=await sharp('public/assets/opening-keepsake.webp').ensureAlpha().raw().toBuffer({resolveWithObject:true});
+assert.equal(opening.info.width,1000);assert(opening.info.hasAlpha,'Opening illustration has real transparency');
+const alphaAt=(x,y)=>opening.data[(Math.round(y)*opening.info.width+Math.round(x))*4+3];
+assert.equal(alphaAt(500,20),0,'Opening has no baked background');
+for(const {bounds:b} of openingHomes){
+ const x=(b.x+b.width/2)*opening.info.width,y=(b.y+b.height/2)*opening.info.height;
+ assert(alphaAt(x,y)<20,'Heart slots are transparent, not baked hearts');
+}
 const video=await readFile('public'+mapVideo.src);
 assert.equal(video.toString('ascii',4,8),'ftyp','Map video has a valid MP4 file-type box');
 assert(video.indexOf(Buffer.from('moov'))<video.indexOf(Buffer.from('mdat')),'Map video metadata precedes media for fast loading');
 assert(video.length<4_000_000,'Mobile map video stays below 4 MB');
-console.log('All 11 optimized artworks and both video stills decode; fast-start MP4 verified ('+video.length+' bytes).');
+console.log('All '+Object.values(assets).filter(a=>a.enabled!==false).length+' optimized artworks and both video stills decode; opening slots and fast-start MP4 verified ('+video.length+' bytes).');
