@@ -34,7 +34,7 @@ The four legacy map WebPs above remain source references. The live stage uses th
 
 ## Decorations, share artwork and fonts
 
-`components/StoryDecorations.tsx` contains reusable `decorative-heart-small` and `decorative-rose-small` SVGs. Every secondary heart follows the supplied `IMG_3011.jpeg`: an uneven dark-brown outline, cream paper centre, beige paper rim and subtle grain. Hearts occupy a 22×26px slot at 85% opacity so the outline remains legible. Roses retain their muted rose gradients and olive leaves. Their static anchors are local to each section. Scroll response is bounded to 3–4px and 2–3°; they have no trail, input or accessibility role. SVG definitions use instance-specific IDs.
+`components/StoryDecorations.tsx` contains reusable `decorative-heart-small` and `decorative-rose-small` SVGs. Both follow the supplied `IMG_3011.jpeg` aesthetic: uneven dark-brown outlines, cream paper centres, beige paper rims and subtle grain. Roses use brown ink petal curls, stems and paper-filled leaves. Hearts occupy a 22×26px slot and roses a 23×29px slot, both at 85% opacity so their outlines remain legible. Their static anchors are local to each section. Scroll response is bounded to 3–4px and 2–3°; they have no trail, input or accessibility role. SVG gradient/filter IDs are unique per instance and decoration kind.
 
 `public/share-preview.jpg` and `app/opengraph-image.png` provide the 1200×630 share composition. `app/icon.svg` and `app/favicon.ico` provide icons. `scripts/create-share-image.mjs` regenerates them. Lora and Noto Naskh Arabic, with their OFL licenses, live in `app/fonts/` and load through `next/font/local`.
 
